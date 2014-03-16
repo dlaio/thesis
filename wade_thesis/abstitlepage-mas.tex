@@ -1,0 +1,32 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+%                                                                 %
+%                ABSTRACT TITLE PAGE and ABSTRACT                 %
+%                         Master's Thesis                         %
+%                                                                 %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% This template file shows how to produce the abstract title page
+%   followed by the abstract for a Master's thesis.
+% To produce a PDF file in one step, just run pdflatex on this file.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\documentclass[chap]{thesis}
+                      
+\begin{document}
+% information for title page (copied from rpititle-mas.tex):    
+\thesistitle{\bf Differential Equations\\On two lines}        
+\author{Sir Isaac Newton}        
+\degree{Master of Science} 
+\department{Mathematics} % provide your area of study here; e.g.,
+%  "Mechanical Engineering", "Nuclear Engineering", "Physics", etc.
+\thadviser{Galileo}
+%\cothadviser{co-adviser} % if needed
+%\cocothadviser{Second co-adviser} % if needed 
+\submitdate{January 1685\\(For Graduation May 1685)} 
+
+% Produce abstract title page:            
+\abstitlepage 
+    
+\pagenumbering{arabic} % numbering of abstract starts with arabic "1"
+%\include{rpiabs}       %include file containing abstract
+test 
+% or, if using format of "rpithes-short.tex", copy text of abstract here. 
+\end{document}
