@@ -49,18 +49,68 @@ class Publisher {
         return sb.toString();
     }
     
-    public static class SendThread implements Runnable
+    public static class SendProcessor implements Runnable
     {
-    	String user = env("APOLLO_USER", "admin");
-        String password = env("APOLLO_PASSWORD", "password");
-        String host = env("APOLLO_HOST", "localhost");
-        int port = Integer.parseInt(env("APOLLO_PORT", "5672"));
-        String channelName = "topic://messages";
-        int numMessages = 1000;
+    	private String user;
+    	private String password;
+    	private String host;
+    	private int port;
+    	private String channelName;
+    	private int numMessages;
         String stringData;
         byte[] bytesData;
+		long sendTime;
         StringBuffer testData = new StringBuffer();
-        long sendTime;
+    	        
+        public String getUser() {
+			return user;
+		}
+
+		public void setUser(String user) {
+			this.user = user;
+		}
+
+		public String getPassword() {
+			return password;
+		}
+
+		public void setPassword(String password) {
+			this.password = password;
+		}
+
+		public String getHost() {
+			return host;
+		}
+
+		public void setHost(String host) {
+			this.host = host;
+		}
+
+		public int getPort() {
+			return port;
+		}
+
+		public void setPort(int port) {
+			this.port = port;
+		}
+
+		public String getChannelName() {
+			return channelName;
+		}
+
+		public void setChannelName(String channelName) {
+			this.channelName = channelName;
+		}
+
+		public int getNumMessages() {
+			return numMessages;
+		}
+
+		public void setNumMessages(int numMessages) {
+			this.numMessages = numMessages;
+		}
+
+
 
 		@Override
 		public void run() 
@@ -178,16 +228,44 @@ class Publisher {
     
     public static class AckProcessor implements Runnable
     {
+    	/*
     	String user = env("APOLLO_USER", "admin");
         String password = env("APOLLO_PASSWORD", "password");
         String host = env("APOLLO_HOST", "localhost");
         int port = Integer.parseInt(env("APOLLO_PORT", "5672"));
         String channelName = "topic://acknoledgements";
+    	*/
+    	private String user;
+    	private String password;
+    	private String host;
+    	private int port;
+    	private String channelName;
     	BufferedWriter writer;
     	boolean running = true;
     	MessageConsumer consumer = null;
-        
-        public void setOuputFile(BufferedWriter writer)
+
+    	
+        public void setUser(String user) {
+			this.user = user;
+		}
+
+		public void setPassword(String password) {
+			this.password = password;
+		}
+
+		public void setHost(String host) {
+			this.host = host;
+		}
+
+		public void setPort(int port) {
+			this.port = port;
+		}
+
+		public void setChannelName(String channelName) {
+			this.channelName = channelName;
+		}
+
+		public void setOuputFile(BufferedWriter writer)
         {
         	this.writer = writer;
         }
@@ -334,14 +412,61 @@ class Publisher {
     	AckProcessor ackProcessor = new AckProcessor();
     	Thread ackThread = null;
     	
+    	SendProcessor sendProcessor = new SendProcessor();
+    	Thread sendThread = null;
+    	String brokerType;
+    	String user = "admin";
+    	String password = "password";
+    	String host = "localhost";
+    	int port = 5672;
+    	String msgChannelName = "topic://messages";
+    	String ackChannelName = "topic://acknoledgements";
+    	int numMessages = 1000;
     	
-    	ackThread = new Thread(ackProcessor);
-    	Thread sendThread = new Thread(new SendThread());
+  
+    	// Read command line args
+    	// broker type, host, port, username, password, send channel name, ack channel name, numMessages, use persistence 
+    	if (args.length != 8)
+    	{
+    	     System.out.println("Usage: Producer brokerType host port username password msgChannelName ackChannelName numMessages");
+    	     System.exit(-1);
+    	}
+    	else
+    	{
+	    	brokerType = args[0];
+	    	host = args[1];
+	    	port = Integer.parseInt(args[2]);
+	    	user = args[3];
+	    	password = args[4];
+	    	msgChannelName = args[5];
+	    	ackChannelName = args[6];
+	    	numMessages = Integer.parseInt(args[7]);
+    	}
     	
-    	BufferedReader commandLine = new java.io.BufferedReader(new InputStreamReader(System.in));
-
     	
+    	/*
+    	 * APOLLO SETTINGS
+    	user = "admin"
+    	password = "password"
+    	host = "localhost"
+    	port = 5672
+    	channelName = topic://messages
+        */
+    	// setup producer
+    	sendProcessor.setUser(user);
+    	sendProcessor.setPassword(password);
+    	sendProcessor.setHost(host);
+    	sendProcessor.setPort(port);
+    	sendProcessor.setChannelName(msgChannelName);
+    	sendProcessor.setNumMessages(numMessages);
+    	
+    	ackProcessor.setUser(user);
+    	ackProcessor.setPassword(password);
+    	ackProcessor.setHost(host);
+    	ackProcessor.setPort(port);
+    	ackProcessor.setChannelName(ackChannelName);
         
+    	// Create output file
         DateFormat df = new SimpleDateFormat("yyyy-MM-dd_HH.mm.ss");  
         File csvFile = new File(df.format(new Date()) +"_Statistics.csv");  
         FileWriter csvOutput = new FileWriter(csvFile);
@@ -352,19 +477,24 @@ class Publisher {
         writer.write("Ack Recv Time,");
         writer.newLine();
         
+        // set output file in ackProcessor
     	ackProcessor.setOuputFile(writer);
-        ackThread.start();
-        Thread.sleep(1000);
+    	
+    	// Create processing threads
+    	ackThread = new Thread(ackProcessor);
+    	sendThread = new Thread(sendProcessor);
+        
+    	ackThread.start();
+    	// TODO - replace with a function that returns when ack thread has started and connected
+        Thread.sleep(2000);
+        
+        // start the message producer
         sendThread.start();
 
 
-        //producer.send(session.createTextMessage("SHUTDOWN"));
-        //Thread.sleep(1000*3);
-        // Wait for threads to finish
-       
+        // wait for threads to finish
         sendThread.join();
         ackThread.join();
-        //ackProcessor.terminate();
         
         // close output files
         writer.flush();
