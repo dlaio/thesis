@@ -1,6 +1,6 @@
 ## Overview
 
-This is an example of how use the Java JMS api with Apollo via the AMQP protocol.
+This is a simple benchmark written in Java to compare the performance of different AMQP broker implementations.
 
 ## Prereqs
 
@@ -17,16 +17,8 @@ Run:
 
 In one terminal window run:
 
-    java -cp target/amqp-example-0.1-SNAPSHOT.jar example.Listener
+    java -cp target/amqp-benchmarks-0.1-SNAPSHOT.jar benchmarks.Consumer
 
 In another terminal window run:
 
-    java -cp target/amqp-example-0.1-SNAPSHOT.jar example.Publisher
-
-You can control to which AMQP server the examples try to connect to by
-setting the following environment variables: 
-
-* `APOLLO_HOST`
-* `APOLLO_PORT`
-* `APOLLO_USER`
-* `APOLLO_PASSWORD`
+    java -cp target/amqp-benchmarks-0.1-SNAPSHOT.jar benchmarks.Producer

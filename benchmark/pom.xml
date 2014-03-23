@@ -19,12 +19,11 @@
 
   <modelVersion>4.0.0</modelVersion>
   
-  <groupId>example</groupId>
-  <artifactId>amqp-example</artifactId>
+  <groupId>benchmarks</groupId>
+  <artifactId>amqp-benchmarks</artifactId>
   <version>0.1-SNAPSHOT</version>
   
-  <name>example</name>
-  <description>Apollo AMQP Java Examples</description>
+  <name>benchmarks</name>
 
   <repositories>
     <repository>
@@ -76,5 +75,6 @@
     </plugins>
   </build>
   
+  <description>AMQP benchmarks for CISH6980 Project</description>
 </project>
 

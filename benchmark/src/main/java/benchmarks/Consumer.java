@@ -1,36 +1,40 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
-package example;
+package benchmarks;
 
 import org.apache.qpid.amqp_1_0.jms.impl.*;
 
 import javax.jms.*;
 
-class Listener {
+class Consumer {
 
     public static void main(String []args) throws JMSException {
 
-        String user = env("APOLLO_USER", "admin");
-        String password = env("APOLLO_PASSWORD", "password");
-        String host = env("APOLLO_HOST", "localhost");
-        int port = Integer.parseInt(env("APOLLO_PORT", "5672"));
-        String msgChannelName = arg(args, 0, "topic://messages");
-        String ackChannelName = arg(args, 0, "topic://acknoledgements");
         boolean running = true;
+    	String user = "admin";
+    	String password = "password";
+    	String host = "localhost";
+    	int port = 5672;
+    	String msgChannelName = "topic://messages";
+    	String ackChannelName = "topic://acknoledgements";
+
+    
+    	// Read command line args
+    	// host, port, username, password, msgChannelName ackChannelName
+    	if (args.length != 6)
+    	{
+    	     System.out.println("Usage: Consumer host port username password msgChannelName ackChannelName");
+    	     System.exit(-1);
+    	}
+    	else
+    	{
+	    	host = args[0];
+	    	port = Integer.parseInt(args[1]);
+	    	user = args[2];
+	    	password = args[3];
+	    	msgChannelName = args[4];
+	    	ackChannelName = args[5];
+    	}
 
         ConnectionFactoryImpl factory = new ConnectionFactoryImpl(host, port, user, password);
         Destination msgChannelDest = null;
@@ -155,7 +159,10 @@ class Listener {
             	messageId = ((BytesMessage) msg).readInt();
             	sentTime = ((BytesMessage) msg).readLong();
             	
-            	System.out.println(String.format("message id: %d - sent at: %d (%d bytes)", messageId, sentTime, msgSize));
+            	if((messageId % 50) ==0)
+            	{
+            		System.out.println(String.format("message id: %d - sent at: %d (%d bytes)", messageId, sentTime, msgSize));
+            	}
             }
             else 
             {
@@ -192,17 +199,4 @@ class Listener {
         System.exit(0);
     }
 
-    private static String env(String key, String defaultValue) {
-        String rc = System.getenv(key);
-        if( rc== null )
-            return defaultValue;
-        return rc;
-    }
-
-    private static String arg(String []args, int index, String defaultValue) {
-        if( index < args.length )
-            return args[index];
-        else
-            return defaultValue;
-    }
 }

@@ -1,20 +1,6 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
-package example;
+package benchmarks;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -31,7 +17,7 @@ import org.apache.qpid.amqp_1_0.jms.impl.*;
 
 import javax.jms.*;
 
-class Publisher {
+class Producer {
 
     public static String readFile(String path) throws IOException
     {
@@ -57,57 +43,44 @@ class Publisher {
     	private int port;
     	private String channelName;
     	private int numMessages;
-        String stringData;
-        byte[] bytesData;
-		long sendTime;
+        private String stringData;
+        private byte[] bytesData;
+		private long sendTime;
+		private int msgSize;
         StringBuffer testData = new StringBuffer();
     	        
-        public String getUser() {
-			return user;
-		}
 
 		public void setUser(String user) {
 			this.user = user;
 		}
 
-		public String getPassword() {
-			return password;
-		}
 
 		public void setPassword(String password) {
 			this.password = password;
 		}
 
-		public String getHost() {
-			return host;
-		}
 
 		public void setHost(String host) {
 			this.host = host;
 		}
 
-		public int getPort() {
-			return port;
-		}
 
 		public void setPort(int port) {
 			this.port = port;
 		}
 
-		public String getChannelName() {
-			return channelName;
-		}
 
 		public void setChannelName(String channelName) {
 			this.channelName = channelName;
 		}
 
-		public int getNumMessages() {
-			return numMessages;
-		}
 
 		public void setNumMessages(int numMessages) {
 			this.numMessages = numMessages;
+		}
+		
+		public void setMsgSize(int msgSize) {
+			this.msgSize = msgSize;
 		}
 
 
@@ -115,7 +88,7 @@ class Publisher {
 		@Override
 		public void run() 
 		{
-	        for (int i=0; i < 10000; i++) 
+	        for (int i=0; i < this.msgSize; i++) 
 	        {  
 	        	testData.append("x"); 
 	        }  
@@ -180,7 +153,7 @@ class Publisher {
 					e.printStackTrace();
 				}
 	            
-	            System.out.println(String.format("msg id: %d -> send time: %d", i, sendTime));
+	            //System.out.println(String.format("msg id: %d -> send time: %d", i, sendTime));
 	          
 	            // Send the message
 	            try 
@@ -191,7 +164,10 @@ class Publisher {
 					e.printStackTrace();
 				}
 	            
-	            System.out.println(String.format("Sent %d messages", i));
+	            if((i % 100) == 0)
+	            {
+	            	System.out.println(String.format("Sent %d messages", i));
+	            }
 	            
 	            try {
 					msg.clearBody();
@@ -354,7 +330,7 @@ class Publisher {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
-                    System.out.println(String.format("Received %d bytes", body.length()));
+                    //System.out.println(String.format("Received %d bytes", body.length()));
                 }                
                 else if( msg instanceof  BytesMessage ) 
                 {
@@ -375,7 +351,7 @@ class Publisher {
 					}
             
                 	//String data = msg.getStringProperty("data");
-                	System.out.println(String.format("message id: %d - (%d/%d/%d)", messageId, sentTime, ackTimeSent, ackTimeRecvd));
+                	//System.out.println(String.format("message id: %d - (%d/%d/%d)", messageId, sentTime, ackTimeSent, ackTimeRecvd));
                     try 
                     {
 						writer.write(messageId + ",");
@@ -414,7 +390,7 @@ class Publisher {
     	
     	SendProcessor sendProcessor = new SendProcessor();
     	Thread sendThread = null;
-    	String brokerType;
+    	String brokerType = "unknown";
     	String user = "admin";
     	String password = "password";
     	String host = "localhost";
@@ -422,13 +398,14 @@ class Publisher {
     	String msgChannelName = "topic://messages";
     	String ackChannelName = "topic://acknoledgements";
     	int numMessages = 1000;
+    	int msgSize = 1000;
     	
   
     	// Read command line args
     	// broker type, host, port, username, password, send channel name, ack channel name, numMessages, use persistence 
-    	if (args.length != 8)
+    	if (args.length != 9)
     	{
-    	     System.out.println("Usage: Producer brokerType host port username password msgChannelName ackChannelName numMessages");
+    	     System.out.println("Usage: Producer brokerType host port username password msgChannelName ackChannelName numMessages msgSize");
     	     System.exit(-1);
     	}
     	else
@@ -441,6 +418,7 @@ class Publisher {
 	    	msgChannelName = args[5];
 	    	ackChannelName = args[6];
 	    	numMessages = Integer.parseInt(args[7]);
+	    	msgSize = Integer.parseInt(args[8]);
     	}
     	
     	
@@ -459,6 +437,7 @@ class Publisher {
     	sendProcessor.setPort(port);
     	sendProcessor.setChannelName(msgChannelName);
     	sendProcessor.setNumMessages(numMessages);
+    	sendProcessor.setMsgSize(msgSize);
     	
     	ackProcessor.setUser(user);
     	ackProcessor.setPassword(password);
@@ -468,7 +447,7 @@ class Publisher {
         
     	// Create output file
         DateFormat df = new SimpleDateFormat("yyyy-MM-dd_HH.mm.ss");  
-        File csvFile = new File(df.format(new Date()) +"_Statistics.csv");  
+        File csvFile = new File(brokerType + "_" + numMessages + "_" + msgSize + "_" + df.format(new Date()) +".csv");  
         FileWriter csvOutput = new FileWriter(csvFile);
         BufferedWriter writer = new BufferedWriter( csvOutput );
         writer.write("Message ID,");
@@ -501,20 +480,6 @@ class Publisher {
         writer.close();
         csvOutput.close();
         System.exit(0);
-    }
-
-    private static String env(String key, String defaultValue) {
-        String rc = System.getenv(key);
-        if( rc== null )
-            return defaultValue;
-        return rc;
-    }
-
-    private static String arg(String []args, int index, String defaultValue) {
-        if( index < args.length )
-            return args[index];
-        else
-            return defaultValue;
     }
 
 }
