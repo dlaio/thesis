@@ -27,7 +27,7 @@
 
 
 %%%%%%%%%%%%%%%%%%%%  supply titlepage info  %%%%%%%%%%%%%%%%%%%%%
-\thesistitle{\bf Performance of heterogenous networks of AMQP1.0 compliant Message-orientated Middleware (MOM) implementations}        
+\thesistitle{\bf Performance of heterogenous networks of AMQP1.0 compliant Message-orientated Middleware (MOM) brokers}        
 \author{David Joe Wade}        
 \degree{Master of Science}
 \department{Computer Science} 
@@ -42,42 +42,90 @@
       
 \begin{document} 
 \listoftodos
-\todo{Add document to version control}
-\titlepage             % Print titlepage          
-\tableofcontents       % required 
-\listoftables          % required if there are tables
-\listoffigures         % required if there are figures
+\titlepage            	 % Print titlepage          
+\tableofcontents          % required 
+\listoftables          	 % required if there are tables
+\listoffigures         	 % required if there are figures
 
 \specialhead{ACKNOWLEDGMENT}
-Special thanks to my wife Anne, my son Jack and my daughter Erin - sorry for spending so many weekends away putting this together.  Thanks to my parents, Brian and Catherine.
+Special thanks to my wife Anne, my son Jack and my daughter Erin - sorry for the added stress while putting this together.  I also have a great amount of gratitude to my parents, Brian and Catherine - who helped keep the family running while I was focused on this project.
 
 \specialhead{ABSTRACT}
-The Advanced Message Queuing Protocol (AMQP) provides an open standard application layer protocol for message orientated middleware (MOM).  There are many MOM implementations that meet the AMQP standard making it possible to integrate disassociated systems without having to standardize MOM implementations across different teams.  \todo{reword}  This paper provides benchmarking information about performance impact of integrating different AMQP implementations.  
-
+The Advanced Message Queuing Protocol (AMQP) provides an open standard application-layer protocol for message orientated middleware (MOM).  There are many MOM implementations that meet the AMQP standard making it possible to integrate disassociated systems without having to standardize MOM implementations across different teams.  \todo{reword}  This paper provides benchmarking information about performance impact of integrating different AMQP implementations.  
 
 \chapter{INTRODUCTION}
-\section{AMQP History}
+
+\section{Middleware}
+In computer science, the term \"middleware\" has many meanings.  Generically, middleware can be thought as \"glue\" \todo{ripped from wikipedia} for computer software.  It facilitates communication between different software components - abstracting the complexities of intra and inter process communication from a software developer to allow focus on the core functionality of a software component.  In a broad sense, things such as user space software drivers, virtual machines and kernel IPC are forms of middleware.  This paper focuses on middleware as it relates to distributed applications - typically used to share data and state between software components that exists in separate execution environments connected though a network.
+
+Even with this narrow definition there are many different architectures for data passing/communication.  Some of the common design patterns used are: enterprise application integration (EAI), data integration (DI), message oriented middleware (MOM), object request brokers (ORB) and the enterprise service bus (ESB).  
+
 \subsection{Message Oriented Middleware (MOM)}
 Message-orientated middleware (MOM) is software that facilitates the development of distributed systems by providing an infrastructure for asynchronously sending and receiving data over a network \cite{todo}.   There are many implementations of such messaging systems, but until recently most of them have been closed source/proprietary systems.  Lacking any standard for communications protocols software, developers and systems engineers were often forced to choose (or have chosen) a single MOM implementation and become stuck with its features and limitations.  
 
 \todo{describe other middleware systems, CORBA, DDE, etc}
 \todo{what are the fundamental types of middleware (data-centric, object-orientated, message-oriented)}
-\todo{comparision table with all chosed AMQP implementations (client languages/implementation/version/etc)}
+
+\section{AMQP History}
+The development of AMQP was started in 2003 by John O'Hara and others at JPMorgan Chase in London, UK.  JPMorgan was looking for a messaging solution with high durability that supported a very high number of small message transactions (in the range of 500,000 messages/second) \cite{todo}.  Initial development was done internally at JPMorgan Chase but was later subcontracted with iMatix Corporation for a broker and protocol documentation.  In 2005 JPMorgan Chase formed a working group with other companies such as: Cisco Systems, Red Hat, iMatix and the Transaction Workflow Innovation Standards Team (TWIST).
+
+The working group released four major versions of the AMQP standard:
+0-8 published in June 2006
+0-9 published in December 2006
+0-9-1 published November 2008
+0-10 published in February 2008
+
+\todo{clean up format and cite}
+
+JPMorgan Chase collaborated with Red Hat to develop the Apache Qpid MOM implementation.  Independently, RabbitMQ was developed by Rabbit Technologies as well as AMQP complient implementations by Microsoft and StormMQ.
+
+The working group expanded to include 23 companies, including: Bank of America, Barclays, Credit Suisse, Deutsche B\ddot{o}rse Systems, Goldman Sachs, Microsoft Corporation, Novell, Red Hat, VMware and others.
+
+The AMQP standard also defines message orientation, queuing, routing, reliability, and security.   AMQP also describes the wire-level format of the data so that any nodes that are AMQP compliant can handle the message stream.  
+
+Standardization lead to the rapid development of many MOM systems such as: Apache Qpid, RabbitMQ, StormMQ, ActiveMQ, Apache Apollo, SwiftMQ.  Even Microsoft supports the AMQP1.0 protocol with their implementation of the ServiceBus class in .NET  and is a supported protocol on the Azure cloud computing platform.  
+
+MOM implementations that support the AMQP version 1.0 specification (Released October 29th 2012) \cite{todo} are interoperable and are available on many platforms.  
+
+\todo{describe AMQP version issues}
+
+Because these implementations were designed around the message traffic of the financial services sector they excel at passing small messages and focus on message throughput.  There are performance differences between each implementation and generic benchmarks for each implementation are available \cite{todo}\cite{todo}.
+
+
+\section{Alternatives}
+The AMQP specification is not unique in its goal of providing a cross-platform, ubiquitous message protocol.  There are several popular specifications in current use.  Many MOM implementations that support the AMQP protocol also support these other protocols; some are built in natively while others need to be enabled as plugins.   
+
+\subsection{STOMP}
+Simple Text Oriented Message Protocol (STOMP) is a text-based protocol designed to work with message oriented middleware systems.  It defines a wire-level message encoding format that allows for STOMP clients to communicate with any STOMP enabled message broker.  It is built on top of TCP/IP and uses a protocol similar to HTTP.  
+
+\subsection{OpenWire}
+\todo{fill in section}
+
+\subsection{XMPP}
+Extensible Messaging and Presence Protocol
+\todo{fill in section}
+
+\subsection{MQTT}
+MQ Telemetry Transport (MQTT) is a light-weight messaging protocol.  It is specifically targeted for applications where a light-weight protocol is needed due to code size limitations.  The protocol was invented by Andy Stanford-Clark (IBM) and Arlen Nipper (Cirrus Link Solutions).  
+
+In 2013 the MQTT protocol specification was submitted to the OASIS specification body.  There is a variation of the standard (MQTT-S) for embedded applications on non-TCP/IP networks such as ZigBee.  Facebook Messenger uses the MQTT protocol internally for large parts of its functionality. \todo{http://en.wikipedia.org/wiki/MQ_Telemetry_Transport}
 
 \subsection{Java Messaging Service (JMS)}
-The Java EE JMS (Java Messaging Service) was the starting point for attempting to standardize MOM. Unfortunately, JMS only specifies an application programming interface (API) and does not specify a format for exchanged messages so it does not create interoperability.   To achieve this desired interoperability other standards such as AMQP (Advanced Message Queuing Protocol) built upon the JMS standards).  
+The Java EE JMS (Java Messaging Service) was the starting point for attempting to standardize MOM. Unfortunately, JMS only specifies an application programming interface (API) and does not specify a format for exchanged messages so it does not create interoperability.   To achieve this desired interoperability other standards such as AMQP (Advanced Message Queuing Protocol) built upon the JMS standards). 
 
-\subsection{AMQP Specification}
 
-\subsection{AMQP founder}
-The development of AMQP was started in 2003 by John O'Hara and others at JPMorgan.  JPMorgan was looking for a messaging solution with high durability that supported a very high number of small message transactions (in the range of 500,000 messages/second) \cite{todo}.  The AMQP standard also defines message orientation, queuing, routing, reliability, and security.   AMQP also describes the wire-level format of the data so that any nodes that are AMQP compliant can handle the message stream.  
 
-Standardization lead to the rapid development of many MOM systems such as: Apache Qpid, RabbitMQ, StormMQ, ActiveMQ, Apache Apollo and Microsoft’s Azure Service Bus.  MOM implementations that support the AMQP version 1.0 specification (Released October 29th 2012) \cite{todo} are interoperable and are available on many platforms.  Because these implementations were designed around the message traffic of the financial services sector they excel at passing small messages and focus on message throughput.  There are performance differences between each implementation and generic benchmarks for each implementation are available \cite{todo}\cite{todo}.
+\section{AMQP Specification}
+
+
+\section{AMQP implementations}
+
+\todo{comparision table with all chosen AMQP implementations (client languages/implementation/version/etc)}
 
 \subsection{RabbitMQ}
 RabbitMQ is an open source message broker written in the Erlang programming language.  \todo{http://www.rabbitmq.com} RabbitMQ is developed by and supported by Rabbit Technologies Ltd.  It is actively being developed, the latest stable version (3.2.4) was released on March 4, 2014.  It is licensed under the Mozilla Public License \cite{rabbitmq-wikipedia}.
 
-The development history/managment of RabbitMQ is complicated.  Originally developed by Lshift, the project was moved to an independent company Rabbit Technologies Ltd, which was cofounded by Monadic and CohesiveFT.  In 2013, Rabbit Technologies Ltd. was acquired by SpringSource, a division of VMware, Inc. \todo{http://www.lshift.net/blog/2010/04/13/rabbitmq-2}.  As of March 2014 - commercial support for RabbitMQ was being provided by Pivotal, Ltd \todo{http://www.gopivotal.com/support} \todo{work out relationship with VMware}.
+The development history/management of RabbitMQ is complicated.  Originally developed by Lshift, the project was moved to an independent company Rabbit Technologies Ltd, which was cofounded by Monadic and CohesiveFT.  In 2013, Rabbit Technologies Ltd. was acquired by SpringSource, a division of VMware, Inc. \todo{http://www.lshift.net/blog/2010/04/13/rabbitmq-2}.  As of March 2014 - commercial support for RabbitMQ was being provided by Pivotal, Ltd \todo{http://www.gopivotal.com/support} \todo{work out relationship with VMware}.
 
 RabbitMQ is cross platform and has bindings/clients for a wide range of systems/programming languages.  \todo{http://www.rabbitmq.com/devtools.html}.  has bindings/client for many different languages.  RabbitMQ has comprehensive documentation, and supports Clustering, High Availability, SSL, Management, etc. \todo{complete}
 
@@ -92,7 +140,7 @@ Version 5.3 of Apache ActiveMQ has published performance results using the SPECj
 \todo{ http://en.wikipedia.org/wiki/ActiveMQ}
 
 \subsection{ApolloMQ}
-ApolloMQ is an open source message broker written in Java.  It is a fork of Apache ActiveMQ with the primary difference being the threading model and message dispatching architecture \todo{https://activemq.apache.org/apollo/}.  ApolloMQ maintains multi-protocol support and supports STOMP, AMQP, MQTT \todo{what's this}, Openwire, SSL and WebSockets.
+ApolloMQ is an open source message broker written in Java.  It is a fork of Apache ActiveMQ with the primary difference being the threading model and message dispatching architecture \todo{https://activemq.apache.org/apollo/}.  ApolloMQ maintains multi-protocol support and supports STOMP, AMQP 1.0, MQTT, OpenWire, SSL and WebSockets.
 
 
 

@@ -264,6 +264,8 @@ class Producer {
     	{
     		ConnectionFactoryImpl factory = new ConnectionFactoryImpl(host, port, user, password);
             Destination dest = null;
+            Session session = null;
+            Connection connection = null;
             if( channelName.startsWith("topic://") ) 
             {
                 dest = new TopicImpl(channelName);
@@ -273,40 +275,20 @@ class Producer {
                 dest = new QueueImpl(channelName);
             }
 
-            Connection connection = null;
+            
 			try {
 				connection = factory.createConnection(user, password);
-			} catch (JMSException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			
-            try {
 				connection.start();
-			} catch (JMSException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-            
-            Session session = null;
-			try {
 				session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-			} catch (JMSException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			
-            
-			try {
 				consumer = session.createConsumer(dest);
 			} catch (JMSException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 			
-            long count = 1;
             System.out.println("Waiting for messages...");
             int messageId;
+            int msgType;
             long sentTime;
             long ackTimeSent;
             long ackTimeRecvd;
@@ -336,12 +318,14 @@ class Producer {
                 {
                 
                 	messageId = 0;
+                	msgType = 0;
                 	sentTime = 0;
                 	ackTimeSent = 0;
                 	ackTimeRecvd = 0;
 					try
 					{
 						messageId = ((BytesMessage) msg).readInt();
+						msgType = ((BytesMessage) msg).readInt();
 						sentTime = ((BytesMessage) msg).readLong();
 						ackTimeSent = ((BytesMessage) msg).readLong();
 						ackTimeRecvd = System.currentTimeMillis();
@@ -349,21 +333,32 @@ class Producer {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
-            
-                	//String data = msg.getStringProperty("data");
-                	//System.out.println(String.format("message id: %d - (%d/%d/%d)", messageId, sentTime, ackTimeSent, ackTimeRecvd));
-                    try 
+					
+					//System.out.println(String.format("message id: %d - (%d/%d/%d)", messageId, sentTime, ackTimeSent, ackTimeRecvd));
+                   	try 
                     {
 						writer.write(messageId + ",");
-						writer.write(sentTime + ",");
-						writer.write(ackTimeSent + ",");
-						writer.write(ackTimeRecvd + ",");
+						writer.write(msgType + ",");
+						
+						if(msgType == 1)
+						{
+							writer.write(sentTime + ",");
+							writer.write(ackTimeSent + ",");
+							writer.write(ackTimeRecvd + ",");
+						}
+						else
+						{
+							writer.write(0 + ",");
+							writer.write(ackTimeSent + ",");
+							writer.write(ackTimeRecvd + ",");
+						}
                     	writer.newLine();
                     } catch (IOException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
-                    
+
+
                     if(messageId == -1)
                     {
                     	running = false;
@@ -451,6 +446,7 @@ class Producer {
         FileWriter csvOutput = new FileWriter(csvFile);
         BufferedWriter writer = new BufferedWriter( csvOutput );
         writer.write("Message ID,");
+        writer.write("Result,");
         writer.write("Sent time,");
         writer.write("Ack Sent Time,");
         writer.write("Ack Recv Time,");

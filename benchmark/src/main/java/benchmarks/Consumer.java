@@ -2,13 +2,49 @@
  */
 package benchmarks;
 
+import java.util.Hashtable;
+
 import org.apache.qpid.amqp_1_0.jms.impl.*;
 
 import javax.jms.*;
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
 
 class Consumer {
+	
 
-    public static void main(String []args) throws JMSException {
+
+	/*
+	public void sendNakMsg(int messageId)
+	{
+        // send response message
+		ack.writeInt(messageId);
+		// message type
+		ack.writeLong(sentTime);
+		ack.writeLong(System.currentTimeMillis());
+
+        try 
+        {
+        	ackProducer.send(ack);
+		} catch (JMSException e) 
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+        ack.clearBody();
+	}
+	*/
+	
+	/*
+    public static class MsgProcessor implements Runnable
+    {
+    
+    }
+    */
+
+    public static void main(String []args) throws JMSException, NamingException {
 
         boolean running = true;
     	String user = "admin";
@@ -17,7 +53,41 @@ class Consumer {
     	int port = 5672;
     	String msgChannelName = "topic://messages";
     	String ackChannelName = "topic://acknoledgements";
+    	int nextExpectedMsgId = 1;
+    	int messageId = 0;
+    	long sentTime = 0;
+    	int msgSize = 0;
+    	
+    	ConnectionFactoryImpl factory;
+        Destination msgChannelDest = null;
+        Destination ackChannelDest = null;
+        Connection connection;
+        Session session;
+        
+        Connection connection2;
+        Session session2;
+        
+        MessageConsumer consumer;
+        MessageProducer ackProducer;
+        
+        InitialContext context = null;
 
+		
+        
+        Hashtable<String, String> env = new Hashtable<String, String>(); 
+        env.put(Context.INITIAL_CONTEXT_FACTORY, "org.apache.qpid.amqp_1_0.jms.jndi.PropertiesFileInitialContextFactory"); 
+        env.put(Context.PROVIDER_URL, "test.properties"); 
+        try {
+			context = new InitialContext(env);
+		} catch (NamingException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} 
+        
+        // Lookup ConnectionFactory and Queue
+        ConnectionFactory cf = (ConnectionFactory) context.lookup("SBCF");
+        msgChannelDest = (Destination) context.lookup("MSGS");
+        ackChannelDest = (Destination) context.lookup("ACKS");
     
     	// Read command line args
     	// host, port, username, password, msgChannelName ackChannelName
@@ -32,12 +102,13 @@ class Consumer {
 	    	port = Integer.parseInt(args[1]);
 	    	user = args[2];
 	    	password = args[3];
-	    	msgChannelName = args[4];
-	    	ackChannelName = args[5];
+	    	//msgChannelName = args[4];
+	    	//ackChannelName = args[5];
     	}
 
-        ConnectionFactoryImpl factory = new ConnectionFactoryImpl(host, port, user, password);
-        Destination msgChannelDest = null;
+    	/*
+        factory = new ConnectionFactoryImpl(host, port, user, password);
+
         if( msgChannelName.startsWith("topic://") ) 
         {
         	msgChannelDest = new TopicImpl(msgChannelName);
@@ -47,7 +118,7 @@ class Consumer {
         }
         
         
-        Destination ackChannelDest = null;
+        
         if( ackChannelName.startsWith("topic://") ) 
         {
         	ackChannelDest = new TopicImpl(ackChannelName);
@@ -55,19 +126,23 @@ class Consumer {
         {
         	ackChannelDest = new QueueImpl(ackChannelName);
         }
+        */
 
-        Connection connection = factory.createConnection(user, password);
+        // Create Connection
+        connection = cf.createConnection();
+        //connection = factory.createConnection(user, password);
         connection.start();
-        Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+        session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
         
-        Connection connection2 = factory.createConnection(user, password);
+        //connection2 = factory.createConnection(user, password);
+        connection2 = cf.createConnection();
         connection2.start();
-        Session session2 = connection2.createSession(false, Session.AUTO_ACKNOWLEDGE);
+        session2 = connection2.createSession(false, Session.AUTO_ACKNOWLEDGE);
         
         // Create message consumer
-        MessageConsumer consumer = session.createConsumer(msgChannelDest);
+        consumer = session.createConsumer(msgChannelDest);
         // Create message ack
-        MessageProducer ackProducer = session2.createProducer(ackChannelDest);
+        ackProducer = session2.createProducer(ackChannelDest);
         
         
         BytesMessage ack = null;
@@ -81,17 +156,16 @@ class Consumer {
 		}
         
         long start = System.currentTimeMillis();
-        long count = 1;
+        nextExpectedMsgId = 1;
         System.out.println("Waiting for messages...");
         while(running == true) 
         {
-        	int messageId = 0;
-        	long sentTime = 0;
         	//System.out.println("calling receive...");
             Message msg = consumer.receive();
             //System.out.println("returned from receive...");
             if( msg instanceof  TextMessage ) 
             {
+            	/*
                 String body = ((TextMessage) msg).getText();
                 System.out.println(String.format("Received %d bytes", body.length()));
                 if( "SHUTDOWN".equals(body)) 
@@ -102,67 +176,51 @@ class Consumer {
                     System.exit(1);
                 } 
                 else 
-                {
-                	/*
-                	int msgSize = 0;
-                	//(int) ((TextMessage) msg).getBodyLength();
-                	
-                	try
-                	{
-                		messageId = msg.getLongProperty("id");
-                	} catch (NumberFormatException ignore) 
-                    {
-                    }
-                	
-                	try
-                	{
-                		sentTime = msg.getLongProperty("send_time");
-                	}catch (NumberFormatException ignore) 
-                    {
-                    }
-                	
-                	try
-                	{
-                		String data = msg.getStringProperty("data");
-                	}
-                	catch (NumberFormatException ignore) 
-                    {
-                    }
-                	
-                	System.out.println(String.format("message id: %d - sent at: %d (%d bytes)", messageId, sentTime, msgSize));
-                
-                	
-                    try 
-                    {
-                        if( count != msg.getIntProperty("id") ) 
-                        {
-                            System.out.println("mismatch: "+count+"!="+msg.getIntProperty("id"));
-                        }
-                    } catch (NumberFormatException ignore) 
-                    {
-                    }
-                    if( count == 1 ) 
-                    {
-                        start = System.currentTimeMillis();
-                    } 
-                    
-                    System.out.println(String.format("Received %d messages.", count));
-                    */
-                	
+                {                	
                     count ++;
                 }
-
+                */
             } 
             else if( msg instanceof  BytesMessage ) 
             {
-            	int msgSize = (int) ((BytesMessage) msg).getBodyLength();
+            	msgSize = (int) ((BytesMessage) msg).getBodyLength();
             	messageId = ((BytesMessage) msg).readInt();
             	sentTime = ((BytesMessage) msg).readLong();
+            	
+            	if(nextExpectedMsgId != messageId)
+            	{
+            		int numDroppedMessages = messageId - nextExpectedMsgId;
+            		System.out.println(String.format("Dropped %d messages", numDroppedMessages));
+            		// TODO - send dropped message NAK
+            		for(int nakMsg = 0; nakMsg < numDroppedMessages; nakMsg++)
+            		{
+            			//sendNakMsg();
+                        // send response message
+            			ack.writeInt(messageId + nakMsg);
+            			// message type
+            			ack.writeInt(-1);
+            			ack.writeLong(sentTime);
+            			ack.writeLong(System.currentTimeMillis());
+
+                        try 
+                        {
+                        	ackProducer.send(ack);
+            			} catch (JMSException e) 
+            			{
+            				// TODO Auto-generated catch block
+            				e.printStackTrace();
+            			}
+            			
+                        ack.clearBody();
+            		}
+            	}
             	
             	if((messageId % 50) ==0)
             	{
             		System.out.println(String.format("message id: %d - sent at: %d (%d bytes)", messageId, sentTime, msgSize));
             	}
+            	
+        		nextExpectedMsgId = messageId + 1;
             }
             else 
             {
@@ -172,10 +230,11 @@ class Consumer {
             
             // send response message
 			ack.writeInt(messageId);
+			// message type
+			ack.writeInt(1);
 			ack.writeLong(sentTime);
 			ack.writeLong(System.currentTimeMillis());
 
-            
             try 
             {
             	ackProducer.send(ack);
