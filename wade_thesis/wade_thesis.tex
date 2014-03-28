@@ -191,7 +191,15 @@ This project will combine the methodologies used in these experiments and add an
 
 In addition to these benchmarks, additional information will be collected in order to compare the performance of the broker implementations.
 
+
+\begin{figure}\centering\vspace{2.0in} 
+\includegraphics{bandwidth_latency_throughput}  \caption{Relation between bandwidth, latency and througput}\label{Figure 1}  \end{figure}
+
 A lab environment will be setup to isolate the tests from outside message traffic.  High-end workstation, class laptop computers and business class network equipment will be used.  The computers will use the latest Long-Term Support version of the Ubuntu Server operating system (12.04LTS) and will be configured to minimize background daemons and processes.  The times of all systems will be synchronized using a local NTP server. A complete listing of software versions used will be published with the results of this research.
+
+
+\begin{figure}\centering\vspace{2.0in} 
+\includegraphics{test_setup}  \caption{Test setup overview}\label{Figure 1}  \end{figure}
 
 \subsection{Existing Benchmarks}
 There are other existing and published benchmarks for MOM systems.  The most widely known is SPECjms2007 \todo{http://www.spec.org/osg/jms2007/}.  It was the first industry standard benchmark for evaluating the Java Messaging Service (JMS).
@@ -202,23 +210,35 @@ SPECjms2007 is designed to model a messaging system of a grocery store - it simu
 
 The design of the benchmarks for this experiment we modeled after the work done by Subramoni, Marsh, Narravula, Lai and Panda in \cite{Subramoni} which in turn based their benchmarks on Ohio State University Micro-benchmarks \todo{citation needed}.  
 
+
+
 \subsection{Direct Exchange - Single Publisher Single Consumer (DE-SPSC)}
+
+\begin{figure}\centering\vspace{2.0in} 
+\includegraphics{direct_connect}  \caption{Direct Exchange - Single Publisher Single Consumer (DE-SPSC)}\label{Figure 2}  \end{figure}
+
 \subsection{Direct Exchange - Multiple Publishers Multiple Consumers (DE-MPMC)}
+
+
 \subsection{Single Publisher - Multiple Consumer (SPMC)}
+
+\begin{figure}\centering\vspace{2.0in} 
+\includegraphics{simple_fanout}  \caption{Single Publisher - Multiple Consumer (SPMC-S)}\label{Figure 3}  \end{figure}
+
+\begin{figure}\centering\vspace{2.0in} 
+\includegraphics{complicated_fanout}  \caption{Complex - Single Publisher - Multiple Consumer (Complex)(SPMC-C)}\label{Figure 4}  \end{figure}
+
+
 \subsection{Topic Exchange - Single Publisher Single Consumer (SPSC)}
 
-\missingfigure{something}
+%\missingfigure{something}
 
 \chapter{Experimental Results}
 \subsection{Experimental Setup}
 And so on, for more chapters.
 Another citation for the bibliography:\cite{anotherbook}
 
-   This is a sentence to take up space and look like text.   This is a sentence to take up space and look like text.   Please refer to Figure~\ref{Figure 1}.  % Note \label command below
- 
-\begin{figure}\centering\vspace{2.0in} 
-\includegraphics{Drawing4}  \caption{This is the Caption for Figure 1 make it long to illustrate   how it looks when wrapped around to the next line}\label{Figure 1}  % the \label command comes AFTER the caption\end{figure}
-
+   This is a sentence to take up space and look like text.   This is a sentence to take up space and look like text.   Please refer to Figure~\ref{Figure 1}.  % Note \label command below
 
 \begin{table}\caption{This is the Caption for Table 2}\label{mytable}\begin{center}\begin{tabular}{lll}Here's	& another 	& example \\
 of		& something	& useful \\\verb+table+ & environment & command. \end{tabular}\end{center}\end{table}
