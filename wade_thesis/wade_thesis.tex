@@ -48,15 +48,19 @@
 \listoffigures         	 % required if there are figures
 
 \specialhead{ACKNOWLEDGMENT}
-Special thanks to my wife Anne, my son Jack and my daughter Erin - sorry for the added stress while putting this together.  I also have a great amount of gratitude to my parents, Brian and Catherine - who helped keep the family running while I was focused on this project.
+Special thanks to my wife Anne, my son Jack, and my daughter Erin - sorry for the added stress while putting this together.  I also have a great amount of gratitude to my parents, Brian and Catherine - who helped keep the family running while I focused on this project.
 
 \specialhead{ABSTRACT}
-The Advanced Message Queuing Protocol (AMQP) provides an open standard application-layer protocol for message orientated middleware (MOM).  There are many MOM implementations that meet the AMQP standard making it possible to integrate disassociated systems without having to standardize MOM implementations across different teams.  \todo{reword}  This paper provides benchmarking information about performance impact of integrating different AMQP implementations.  
+The Advanced Message Queuing Protocol (AMQP) provides an open standard protocol for message orientated middleware (MOM).  There are currently many different AMQP compliant MOM implementations, both open-source and proprietary.  
+
+Because of this standard it is possible to integrate different implementations have been developed that meet the AMQP standard - making it possible to integrate disassociated systems without having to standardize MOM implementations across different teams.  \todo{reword}  
+
+This paper provides benchmarking information about performance impact of integrating different AMQP implementations.  
 
 \chapter{INTRODUCTION}
 
 \section{Middleware}
-In computer science, the term \"middleware\" has many meanings.  Generically, middleware can be thought as \"glue\" \todo{ripped from wikipedia} for computer software.  It facilitates communication between different software components - abstracting the complexities of intra and inter process communication from a software developer to allow focus on the core functionality of a software component.  In a broad sense, things such as user space software drivers, virtual machines and kernel IPC are forms of middleware.  This paper focuses on middleware as it relates to distributed applications - typically used to share data and state between software components that exists in separate execution environments connected though a network.
+In computer science, the term \"middleware\" has many meanings.  Generically, middleware can be thought as \"glue\"  for computer software.  It facilitates communication between different software components - abstracting the complexities of intra and inter process communication from a software developer to allow focus on the core functionality of a software component.  In a broad sense, things such as user space software drivers, virtual machines and kernel IPC are forms of middleware.  This paper focuses on middleware as it relates to distributed applications - typically used to share data and state between software components that exists in separate execution environments connected though a network.
 
 Even with this narrow definition there are many different architectures for data passing/communication.  Some of the common design patterns used are: enterprise application integration (EAI), data integration (DI), message oriented middleware (MOM), object request brokers (ORB) and the enterprise service bus (ESB).  
 
@@ -74,12 +78,28 @@ The working group released four major versions of the AMQP standard:
 0-9 published in December 2006
 0-9-1 published November 2008
 0-10 published in February 2008
+1-0 published October 2012
+
+\subsection{AMQP 1.0}
+
+Version 1.0 was a major departure from the previous AMQP versions and caused significant backlash among the AMQP community.  Even two years after the formal adoption of the AMQP 1.0 specification there are major broker implementations (e.g. RabbitMQ) that do not directly support the AMQP 1.0 standard.  
+
+\subsection {Specific differences}
+
+AMQP 0-10 specified the wire-level protocol and a broker architecture.  AMQP 1.0 only specified a protocol specification and does not impose the traditional AMQP architecture (bindings, exchanges, queues, etc) of earlier specifications.  
+
+AMQP 1.0 is symmetric - it places no constraints on roles of connections endpoints.  Previous AMQP versions had strict definitions for clients and brokers.  Every connection must have a defined client and server (broker).  The AMQP 1.0 standard is much more flexible, it permits point-to-point connections where no central broker or broker network is part of the data transfer.  
+
+AMQP versions before 1.0 also specified protocol commands to manage brokers.  AMQP 0-10 specifies commands such as "Create Queue", "Delete Queue", etc.  AMQP 1.0 does not define these messages as part of the protocol.
+
+
+ 
 
 \todo{clean up format and cite}
 
 JPMorgan Chase collaborated with Red Hat to develop the Apache Qpid MOM implementation.  Independently, RabbitMQ was developed by Rabbit Technologies as well as AMQP complient implementations by Microsoft and StormMQ.
 
-The working group expanded to include 23 companies, including: Bank of America, Barclays, Credit Suisse, Deutsche B\ddot{o}rse Systems, Goldman Sachs, Microsoft Corporation, Novell, Red Hat, VMware and others.
+The working group expanded to include 23 companies, including: Bank of America, Barclays, Credit Suisse, Deutsche B$\ddot{o}$rse Systems, Goldman Sachs, Microsoft Corporation, Novell, Red Hat, VMware and others.
 
 The AMQP standard also defines message orientation, queuing, routing, reliability, and security.   AMQP also describes the wire-level format of the data so that any nodes that are AMQP compliant can handle the message stream.  
 
@@ -108,7 +128,9 @@ Extensible Messaging and Presence Protocol
 \subsection{MQTT}
 MQ Telemetry Transport (MQTT) is a light-weight messaging protocol.  It is specifically targeted for applications where a light-weight protocol is needed due to code size limitations.  The protocol was invented by Andy Stanford-Clark (IBM) and Arlen Nipper (Cirrus Link Solutions).  
 
-In 2013 the MQTT protocol specification was submitted to the OASIS specification body.  There is a variation of the standard (MQTT-S) for embedded applications on non-TCP/IP networks such as ZigBee.  Facebook Messenger uses the MQTT protocol internally for large parts of its functionality. \todo{http://en.wikipedia.org/wiki/MQ_Telemetry_Transport}
+In 2013 the MQTT protocol specification was submitted to the OASIS specification body.  There is a variation of the standard (MQTT-S) for embedded applications on non-TCP/IP networks such as ZigBee.  Facebook Messenger uses the MQTT protocol internally for large parts of its functionality. 
+
+%\todo{http://en.wikipedia.org/wiki/MQ_Telemetry_Transport}
 
 \subsection{Java Messaging Service (JMS)}
 The Java EE JMS (Java Messaging Service) was the starting point for attempting to standardize MOM. Unfortunately, JMS only specifies an application programming interface (API) and does not specify a format for exchanged messages so it does not create interoperability.   To achieve this desired interoperability other standards such as AMQP (Advanced Message Queuing Protocol) built upon the JMS standards). 
@@ -120,7 +142,7 @@ The Java EE JMS (Java Messaging Service) was the starting point for attempting t
 
 \section{AMQP implementations}
 
-\todo{comparision table with all chosen AMQP implementations (client languages/implementation/version/etc)}
+%\todo{comparision table with all chosen AMQP implementations (client languages/implementation/version/etc)}
 
 \subsection{RabbitMQ}
 RabbitMQ is an open source message broker written in the Erlang programming language.  \todo{http://www.rabbitmq.com} RabbitMQ is developed by and supported by Rabbit Technologies Ltd.  It is actively being developed, the latest stable version (3.2.4) was released on March 4, 2014.  It is licensed under the Mozilla Public License \cite{rabbitmq-wikipedia}.
@@ -137,7 +159,7 @@ ActiveMQ is part of Apache's enterprise service bus (ESB) implementations, and i
 
 Version 5.3 of Apache ActiveMQ has published performance results using the SPECjms2007 benchmark. \todo{citation needed} 
 
-\todo{ http://en.wikipedia.org/wiki/ActiveMQ}
+%\todo{ http://en.wikipedia.org/wiki/ActiveMQ}
 
 \subsection{ApolloMQ}
 ApolloMQ is an open source message broker written in Java.  It is a fork of Apache ActiveMQ with the primary difference being the threading model and message dispatching architecture \todo{https://activemq.apache.org/apollo/}.  ApolloMQ maintains multi-protocol support and supports STOMP, AMQP 1.0, MQTT, OpenWire, SSL and WebSockets.
@@ -145,7 +167,9 @@ ApolloMQ is an open source message broker written in Java.  It is a fork of Apac
 
 
 \subsection{HornetQ}
-HornetQ is an open source, multi-protocol messaging system developed from JBoss, a division of Red Hat, Inc. \cite{http://en.wikipedia.org/wiki/JBoss_(company)}.  It can be integrated with JBoss Application Server or embedded into standalone applications.  As of version \todo{find version} it supports the AMQP1.0 specification.  HornetQ is released under the Apache Software License version 2.0 \todo{citation needed}.  There are a few components that are released under LGPL \todo{citation needed} but the plan is to develop a pure ASL2.0 version in the future.  HornetQ is written in Java and supports and platform with a Java 5 or later runtime.   It is actively being developed and maintained with the last stable version 2.4.0 being released on December 16, 2013 \todo{http://www.jboss.org/hornetq}
+HornetQ is an open source, multi-protocol messaging system developed from JBoss, a division of Red Hat, Inc. \cite{http://en.wikipedia.org/wiki/JBoss_(company)}.  It can be integrated with JBoss Application Server or embedded into standalone applications.  As of version \todo{find version} it supports the AMQP1.0 specification.  HornetQ is released under the Apache Software License version 2.0 \todo{citation needed}.  There are a few components that are released under LGPL \todo{citation needed} but the plan is to develop a pure ASL2.0 version in the future.  HornetQ is written in Java and supports and platform with a Java 5 or later runtime.   It is actively being developed and maintained with the last stable version 2.4.0 being released on December 16, 2013 
+
+%\todo{http://www.jboss.org/hornetq}
 
 Tim Fox started the HornetQ project in 2009 and led the project until the end of 2010. 
 
@@ -153,7 +177,7 @@ HornetQ supports many important features.  It supports the STOMP \todo{how does 
 
 As of \todo{date} HornetQ holds the SPECjms2007 benchmark record \todo{citation needed}.  
 
-\todo{http://en.wikipedia.org/wiki/HornetQ}
+%\todo{http://en.wikipedia.org/wiki/HornetQ}
 
 
 \subsection{NullMQ}
