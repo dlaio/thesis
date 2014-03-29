@@ -1,0 +1,92 @@
+2014-03-27 20:52:44 [Client] debug Created connection localhost:5672 with {}
+2014-03-27 20:52:44 [Client] debug Starting connection, urls=[localhost:5672]
+2014-03-27 20:52:44 [Client] debug Created IO thread: 0
+2014-03-27 20:52:44 [Network] debug TCPConnector created for 0-10
+2014-03-27 20:52:44 [Network] debug RECV [[127.0.0.1:60136-localhost:5672]]: INIT(0-10)
+2014-03-27 20:52:44 [Client] debug Connection [127.0.0.1:60136-localhost:5672] no security layer in place
+2014-03-27 20:52:44 [Client] debug Added known-hosts, reconnect-urls=[localhost:5672]
+2014-03-27 20:52:44 [Client] debug Connection successful, urls=[localhost:5672]
+2014-03-27 20:52:44 [Broker] debug SessionState::SessionState .: 0xcfc370
+2014-03-27 20:52:44 [Client] debug Known-brokers for connection: 
+2014-03-27 20:52:44 [Client] debug treating source address as topic: amq.topic
+2014-03-27 20:52:44 [Client] debug treating target address as topic: amq.topic
+2014-03-27 20:52:44 [Client] debug Sending to exchange amq.topic {MessageProperties: content-length=12; content-type=; user-id=; application-headers={}; } {DeliveryProperties: routing-key=; }
+2014-03-27 20:52:44 [Client] debug Delivered {MessageTransferBody: destination=amq.topic; accept-mode=1; acquire-mode=0; } header (46 bytes); properties={{MessageProperties: content-length=12; content-type=; user-id=; application-headers={}; }{DeliveryProperties: exchange=amq.topic; routing-key=; }}
+2014-03-27 20:52:44 [System] debug Exception constructed: Closed by client
+2014-03-27 20:53:19 [Client] debug Created connection 172.16.37.1:5672 with {}
+2014-03-27 20:53:19 [Client] debug Starting connection, urls=[172.16.37.1:5672]
+2014-03-27 20:53:19 [Client] debug Created IO thread: 0
+2014-03-27 20:53:19 [Network] debug TCPConnector created for 0-10
+2014-03-27 20:53:19 [System] debug Exception constructed: Connection [172.16.37.133:39571-172.16.37.1:5672] closed
+2014-03-27 21:12:12 [Client] debug Created connection 172.16.37.1:5672 with {}
+2014-03-27 21:12:12 [Client] debug Starting connection, urls=[172.16.37.1:5672]
+2014-03-27 21:12:12 [Client] debug Created IO thread: 0
+2014-03-27 21:12:12 [Network] debug TCPConnector created for 0-10
+2014-03-27 21:12:12 [System] debug Exception constructed: Connection [172.16.37.133:39681-172.16.37.1:5672] closed
+2014-03-27 21:13:08 [Client] debug Created connection localhost:5672 with {}
+2014-03-27 21:13:08 [Client] debug Starting connection, urls=[localhost:5672]
+2014-03-27 21:13:08 [Client] debug Created IO thread: 0
+2014-03-27 21:13:08 [Network] debug TCPConnector created for 0-10
+2014-03-27 21:13:08 [Network] debug RECV [[127.0.0.1:60249-localhost:5672]]: INIT(0-9)
+2014-03-27 21:13:08 [System] debug Exception constructed: Unsupported version: 0-9 supported version 0-10 (/mnt/hgfs/CISH6980/clients/qpid-0.26/cpp/src/qpid/client/TCPConnector.cpp:290)
+2014-03-27 21:13:08 [System] debug Exception constructed: Connection [127.0.0.1:60249-localhost:5672] closed
+2014-03-27 21:17:06 [Client] debug Created connection localhost:5672 with {}
+2014-03-27 21:17:06 [Client] debug Starting connection, urls=[localhost:5672]
+2014-03-27 21:17:06 [Client] debug Created IO thread: 0
+2014-03-27 21:17:06 [Network] debug TCPConnector created for 0-10
+2014-03-27 21:17:06 [Network] debug RECV [[127.0.0.1:60277-localhost:5672]]: INIT(0-9)
+2014-03-27 21:17:06 [System] debug Exception constructed: Unsupported version: 0-9 supported version 0-10 (/mnt/hgfs/CISH6980/clients/qpid-0.26/cpp/src/qpid/client/TCPConnector.cpp:290)
+2014-03-27 21:17:06 [System] debug Exception constructed: Connection [127.0.0.1:60277-localhost:5672] closed
+2014-03-27 21:18:23 [Client] debug Created connection localhost:5672 with {}
+2014-03-27 21:18:23 [Client] debug Starting connection, urls=[localhost:5672]
+2014-03-27 21:18:23 [Client] debug Created IO thread: 0
+2014-03-27 21:18:23 [Network] debug TCPConnector created for 0-10
+2014-03-27 21:18:23 [Network] debug RECV [[127.0.0.1:60286-localhost:5672]]: INIT(0-9)
+2014-03-27 21:18:23 [System] debug Exception constructed: Unsupported version: 0-9 supported version 0-10 (/mnt/hgfs/CISH6980/clients/qpid-0.26/cpp/src/qpid/client/TCPConnector.cpp:290)
+2014-03-27 21:18:23 [System] debug Exception constructed: Connection [127.0.0.1:60286-localhost:5672] closed
+2014-03-29 12:36:16 [Client] debug Created connection localhost:5672 with {}
+2014-03-29 12:36:16 [Client] debug Starting connection, urls=[localhost:5672]
+2014-03-29 12:36:16 [Client] debug Created IO thread: 0
+2014-03-29 12:36:16 [Network] debug TCPConnector created for 0-10
+2014-03-29 12:36:16 [Network] debug RECV [[127.0.0.1:32844-localhost:5672]]: INIT(0-9)
+2014-03-29 12:36:16 [System] debug Exception constructed: Unsupported version: 0-9 supported version 0-10 (/mnt/hgfs/CISH6980/clients/qpid-0.26/cpp/src/qpid/client/TCPConnector.cpp:290)
+2014-03-29 12:36:16 [System] debug Exception constructed: Connection [127.0.0.1:32844-localhost:5672] closed
+2014-03-29 12:36:45 [Client] debug Created connection 10.9.1.30:5672 with {}
+2014-03-29 12:36:45 [Client] debug Starting connection, urls=[10.9.1.30:5672]
+2014-03-29 12:36:45 [Client] debug Created IO thread: 0
+2014-03-29 12:36:45 [Network] debug TCPConnector created for 0-10
+2014-03-29 12:36:46 [Network] debug RECV [[172.16.37.129:35320-10.9.1.30:5672]]: INIT(0-10)
+2014-03-29 12:36:46 [System] debug Exception constructed: No suitable mechanism!
+2014-03-29 12:36:46 [System] debug Exception constructed: No suitable mechanism!
+2014-03-29 12:36:46 [System] debug Exception constructed: No suitable mechanism!
+2014-03-29 13:45:37 [Client] debug Created connection 10.9.1.30:5672 with {}
+2014-03-29 13:45:37 [Client] debug Starting connection, urls=[10.9.1.30:5672]
+2014-03-29 13:45:37 [Client] debug Created IO thread: 0
+2014-03-29 13:45:37 [Network] debug TCPConnector created for 0-10
+2014-03-29 13:45:37 [System] debug Exception constructed: Connection [172.16.37.129:35519-10.9.1.30:5672] closed
+2014-03-29 13:47:03 [Client] debug Created connection 10.9.1.30:5672 with {username:admin}
+2014-03-29 13:47:03 [Client] debug Starting connection, urls=[10.9.1.30:5672]
+2014-03-29 13:47:03 [Client] debug Created IO thread: 0
+2014-03-29 13:47:03 [Network] debug TCPConnector created for 0-10
+2014-03-29 13:47:03 [System] debug Exception constructed: Connection [172.16.37.129:35524-10.9.1.30:5672] closed
+2014-03-29 13:47:27 [Client] debug Created connection 10.9.1.30:5672 with {username:admin}
+2014-03-29 13:47:27 [Client] debug Starting connection, urls=[10.9.1.30:5672]
+2014-03-29 13:47:27 [Client] debug Created IO thread: 0
+2014-03-29 13:47:27 [Network] debug TCPConnector created for 0-10
+2014-03-29 13:47:27 [System] debug Exception constructed: Connection [172.16.37.129:35526-10.9.1.30:5672] closed
+2014-03-29 13:48:20 [Client] debug Created connection 10.9.1.30:5672 with {username:admin}
+2014-03-29 13:48:20 [Client] debug Starting connection, urls=[10.9.1.30:5672]
+2014-03-29 13:48:20 [Client] debug Created IO thread: 0
+2014-03-29 13:48:20 [Network] debug TCPConnector created for 0-10
+2014-03-29 13:48:21 [Network] debug RECV [[172.16.37.129:35529-10.9.1.30:5672]]: INIT(0-10)
+2014-03-29 13:48:21 [System] debug Exception constructed: No suitable mechanism!
+2014-03-29 13:48:21 [System] debug Exception constructed: No suitable mechanism!
+2014-03-29 13:48:21 [System] debug Exception constructed: No suitable mechanism!
+2014-03-29 14:28:13 [Client] debug Created connection 10.9.1.30:5672 with {username:admin}
+2014-03-29 14:28:13 [Client] debug Starting connection, urls=[10.9.1.30:5672]
+2014-03-29 14:28:13 [Client] debug Created IO thread: 0
+2014-03-29 14:28:13 [Network] debug TCPConnector created for 0-10
+2014-03-29 14:28:13 [Network] debug RECV [[172.16.37.129:35730-10.9.1.30:5672]]: INIT(0-10)
+2014-03-29 14:28:13 [System] debug Exception constructed: No suitable mechanism!
+2014-03-29 14:28:13 [System] debug Exception constructed: No suitable mechanism!
+2014-03-29 14:28:13 [System] debug Exception constructed: No suitable mechanism!
