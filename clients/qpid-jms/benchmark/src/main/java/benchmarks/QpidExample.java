@@ -26,12 +26,12 @@ public class QpidExample
            Class.forName("org.apache.qpid.amqp_1_0.jms.jndi.PropertiesFileInitialContextFactory");
 
            Hashtable env = new Hashtable();
-           env.put("java.naming.provider.url", "hello.properties");
+           env.put("java.naming.provider.url", "amqp.properties");
            env.put("java.naming.factory.initial", "org.apache.qpid.amqp_1_0.jms.jndi.PropertiesFileInitialContextFactory");
 
            Context context = new InitialContext(env);
 
-           ConnectionFactory connectionFactory = (ConnectionFactory) context.lookup("localhost");
+           ConnectionFactory connectionFactory = (ConnectionFactory) context.lookup("brokerURI");
            Connection connection = connectionFactory.createConnection();
 
            Session producersession = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
