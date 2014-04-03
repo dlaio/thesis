@@ -12,10 +12,14 @@ import java.io.InputStreamReader;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Hashtable;
 
 import org.apache.qpid.amqp_1_0.jms.impl.*;
 
 import javax.jms.*;
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
 
 class Producer {
 
@@ -37,42 +41,27 @@ class Producer {
     
     public static class SendProcessor implements Runnable
     {
-    	private String user;
-    	private String password;
-    	private String host;
-    	private int port;
-    	private String channelName;
-    	private int numMessages;
+    	private int clientId = 0;
+    	private int numMessages = 0;
         private String stringData;
         private byte[] bytesData;
 		private long sendTime;
 		private int msgSize;
+		ConnectionFactory factory = null; 
+        Queue dest = null;
         StringBuffer testData = new StringBuffer();
-    	        
-
-		public void setUser(String user) {
-			this.user = user;
+    	 
+        public void setClientId(int id) {
+			this.clientId = id;
 		}
 
-
-		public void setPassword(String password) {
-			this.password = password;
+        public void setFactory(ConnectionFactory factory) {
+			this.factory = factory;
 		}
-
-
-		public void setHost(String host) {
-			this.host = host;
-		}
-
-
-		public void setPort(int port) {
-			this.port = port;
-		}
-
-
-		public void setChannelName(String channelName) {
-			this.channelName = channelName;
-		}
+        
+        public void setDestination(Queue queue) {
+        	this.dest = queue;
+        }
 
 
 		public void setNumMessages(int numMessages) {
@@ -96,22 +85,12 @@ class Producer {
 	        stringData = testData.toString();   // If you wanted to go char by char
 	        bytesData = stringData.getBytes();
 	        	
-	        
-			ConnectionFactoryImpl factory = new ConnectionFactoryImpl(host, port, user, password);
-	        Destination dest = null;
-	        if( channelName.startsWith("topic://") ) 
-	        {
-	            dest = new TopicImpl(channelName);
-	        } else 
-	        {
-	            dest = new QueueImpl(channelName);
-	        }
 
 	        Session session = null;
 	        Connection connection = null;
 	        MessageProducer producer = null;
 			try {
-				connection = factory.createConnection(user, password);
+				connection = factory.createConnection();
 				connection.start();
 				session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
 				producer = session.createProducer(dest);
@@ -145,6 +124,7 @@ class Producer {
 					//msg.setLongProperty("send_time", sendTime);
 					//msg.setStringProperty("data", data);
 	            	msg.writeInt(i);
+	            	msg.writeInt(clientId);
 	            	msg.writeLong(System.currentTimeMillis());
 	            	msg.writeBytes(bytesData);
 					
@@ -181,6 +161,7 @@ class Producer {
 	        //send shutdown message
         	try {
 				msg.writeInt(-1);
+				msg.writeInt(clientId);
 				msg.writeLong(System.currentTimeMillis());
 				producer.send(msg);
 			} catch (JMSException e1) 
@@ -190,56 +171,36 @@ class Producer {
 			}
         	
         
+       /*
         	// close the connection
 	        try {
-				connection.close();
+				//connection.close();
 			} catch (JMSException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			
+			*/
 		}
     	
     }
     
     public static class AckProcessor implements Runnable
     {
-    	/*
-    	String user = env("APOLLO_USER", "admin");
-        String password = env("APOLLO_PASSWORD", "password");
-        String host = env("APOLLO_HOST", "localhost");
-        int port = Integer.parseInt(env("APOLLO_PORT", "5672"));
-        String channelName = "topic://acknoledgements";
-    	*/
-    	private String user;
-    	private String password;
-    	private String host;
-    	private int port;
-    	private String channelName;
     	BufferedWriter writer;
     	boolean running = true;
     	MessageConsumer consumer = null;
+    	ConnectionFactory factory = null;
+    	Queue dest = null;
 
     	
-        public void setUser(String user) {
-			this.user = user;
+        public void setFactory(ConnectionFactory factory) {
+			this.factory = factory;
 		}
+        
+        public void setDestination(Queue queue) {
+        	this.dest = queue;
+        }
 
-		public void setPassword(String password) {
-			this.password = password;
-		}
-
-		public void setHost(String host) {
-			this.host = host;
-		}
-
-		public void setPort(int port) {
-			this.port = port;
-		}
-
-		public void setChannelName(String channelName) {
-			this.channelName = channelName;
-		}
 
 		public void setOuputFile(BufferedWriter writer)
         {
@@ -262,22 +223,12 @@ class Producer {
         @Override
     	public void run()
     	{
-    		ConnectionFactoryImpl factory = new ConnectionFactoryImpl(host, port, user, password);
-            Destination dest = null;
+    		
             Session session = null;
             Connection connection = null;
-            if( channelName.startsWith("topic://") ) 
-            {
-                dest = new TopicImpl(channelName);
-            } 
-            else 
-            {
-                dest = new QueueImpl(channelName);
-            }
-
             
 			try {
-				connection = factory.createConnection(user, password);
+				connection = factory.createConnection();
 				connection.start();
 				session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
 				consumer = session.createConsumer(dest);
@@ -288,6 +239,7 @@ class Producer {
 			
             System.out.println("Waiting for messages...");
             int messageId;
+            int clientId;
             int msgType;
             long sentTime;
             long ackTimeSent;
@@ -318,6 +270,7 @@ class Producer {
                 {
                 
                 	messageId = 0;
+                	clientId = 0;
                 	msgType = 0;
                 	sentTime = 0;
                 	ackTimeSent = 0;
@@ -325,6 +278,7 @@ class Producer {
 					try
 					{
 						messageId = ((BytesMessage) msg).readInt();
+						clientId = ((BytesMessage) msg).readInt();
 						msgType = ((BytesMessage) msg).readInt();
 						sentTime = ((BytesMessage) msg).readLong();
 						ackTimeSent = ((BytesMessage) msg).readLong();
@@ -337,7 +291,9 @@ class Producer {
 					//System.out.println(String.format("message id: %d - (%d/%d/%d)", messageId, sentTime, ackTimeSent, ackTimeRecvd));
                    	try 
                     {
+                   		//System.out.println("writing some stuff");
 						writer.write(messageId + ",");
+						writer.write(clientId + ",");
 						writer.write(msgType + ",");
 						
 						if(msgType == 1)
@@ -386,59 +342,60 @@ class Producer {
     	SendProcessor sendProcessor = new SendProcessor();
     	Thread sendThread = null;
     	String brokerType = "unknown";
-    	String user = "admin";
-    	String password = "password";
-    	String host = "localhost";
-    	int port = 5672;
-    	String msgChannelName = "topic://messages";
-    	String ackChannelName = "topic://acknoledgements";
     	int numMessages = 1000;
     	int msgSize = 1000;
+    	Destination msgChannelDest = null;
+    	Destination ackChannelDest = null;
+    	long startTime = 0;
+    	long endTime = 0;
+    	
+        InitialContext context = null;
+
+        Hashtable<String, String> env = new Hashtable<String, String>(); 
+        env.put(Context.INITIAL_CONTEXT_FACTORY, "org.apache.qpid.amqp_1_0.jms.jndi.PropertiesFileInitialContextFactory"); 
+        env.put(Context.PROVIDER_URL, "amqp.properties"); 
+        try {
+			context = new InitialContext(env);
+		} catch (NamingException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} 
+        
+        // Lookup ConnectionFactory and Queue from the context factory
+        //ConnectionFactoryImpl factory = (ConnectionFactoryImpl) context.lookup("brokerURI");
+        //ConnectionFactory factory = = (ConnectionFactory) context.lookup("SBCF");
+        //msgChannelDest = (Destination) context.lookup("MSGS");
+        //ackChannelDest = (Destination) context.lookup("ACKS");
+        
+        ConnectionFactory connectionFactory = (ConnectionFactory) context.lookup("brokerURI");
+        //connection = connectionFactory.createConnection();
+        Queue msgQueue = (Queue) context.lookup("MSGS");
+        Queue ackQueue = (Queue) context.lookup("ACKS");
     	
   
     	// Read command line args
     	// broker type, host, port, username, password, send channel name, ack channel name, numMessages, use persistence 
-    	if (args.length != 9)
+    	if (args.length != 3)
     	{
-    	     System.out.println("Usage: Producer brokerType host port username password msgChannelName ackChannelName numMessages msgSize");
+    	     System.out.println("Usage: Producer brokerType numMessages msgSize");
     	     System.exit(-1);
     	}
     	else
     	{
 	    	brokerType = args[0];
-	    	host = args[1];
-	    	port = Integer.parseInt(args[2]);
-	    	user = args[3];
-	    	password = args[4];
-	    	msgChannelName = args[5];
-	    	ackChannelName = args[6];
-	    	numMessages = Integer.parseInt(args[7]);
-	    	msgSize = Integer.parseInt(args[8]);
+	    	numMessages = Integer.parseInt(args[1]);
+	    	msgSize = Integer.parseInt(args[2]);
     	}
     	
     	
-    	/*
-    	 * APOLLO SETTINGS
-    	user = "admin"
-    	password = "password"
-    	host = "localhost"
-    	port = 5672
-    	channelName = topic://messages
-        */
     	// setup producer
-    	sendProcessor.setUser(user);
-    	sendProcessor.setPassword(password);
-    	sendProcessor.setHost(host);
-    	sendProcessor.setPort(port);
-    	sendProcessor.setChannelName(msgChannelName);
+    	sendProcessor.setFactory(connectionFactory);
+    	sendProcessor.setDestination(msgQueue);
     	sendProcessor.setNumMessages(numMessages);
     	sendProcessor.setMsgSize(msgSize);
     	
-    	ackProcessor.setUser(user);
-    	ackProcessor.setPassword(password);
-    	ackProcessor.setHost(host);
-    	ackProcessor.setPort(port);
-    	ackProcessor.setChannelName(ackChannelName);
+    	ackProcessor.setFactory(connectionFactory);
+    	ackProcessor.setDestination(ackQueue);
         
     	// Create output file
         DateFormat df = new SimpleDateFormat("yyyy-MM-dd_HH.mm.ss");  
@@ -446,6 +403,7 @@ class Producer {
         FileWriter csvOutput = new FileWriter(csvFile);
         BufferedWriter writer = new BufferedWriter( csvOutput );
         writer.write("Message ID,");
+        writer.write("Client ID,");
         writer.write("Result,");
         writer.write("Sent time,");
         writer.write("Ack Sent Time,");
@@ -464,12 +422,33 @@ class Producer {
         Thread.sleep(2000);
         
         // start the message producer
+        startTime = System.currentTimeMillis();
         sendThread.start();
 
 
         // wait for threads to finish
         sendThread.join();
         ackThread.join();
+        endTime = System.currentTimeMillis();
+        
+        System.out.printf("Start time: %d\n", startTime);
+        System.out.printf("End time: %d\n", endTime);
+        float timeDeltaSec = ((float)(endTime - startTime)/1000);
+        float throughput = numMessages / timeDeltaSec;
+        float bandwidth = ((float)(numMessages * msgSize) / timeDeltaSec/1000000);
+        
+        System.out.printf("runtime: %f sec\n", timeDeltaSec);
+        System.out.printf("throughput: %f messages/sec\n", throughput);
+        System.out.printf("bandwidth: %f MB/sec\n", bandwidth);
+        
+        writer.newLine();
+        writer.write("runtime," + timeDeltaSec + ",sec");
+        writer.newLine();
+        writer.write("throughput," + throughput + ",msgs/sec");
+        writer.newLine();
+        writer.write("bandwidth," + bandwidth + ",MB/sec");
+        writer.newLine();
+        
         
         // close output files
         writer.flush();

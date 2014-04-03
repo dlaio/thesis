@@ -2,6 +2,7 @@
  */
 package benchmarks;
 
+import java.util.Enumeration;
 import java.util.Hashtable;
 
 import org.apache.qpid.amqp_1_0.jms.impl.*;
@@ -50,14 +51,12 @@ class Consumer {
     public static void main(String []args) throws JMSException, NamingException {
 
         boolean running = true;
-    	String user = "admin";
-    	String password = "admin";
-    	String host = "localhost";
-    	int port = 5672;
-    	String msgChannelName = "queue://msgs";
-    	String ackChannelName = "queue://acks";
+    	int clientId = 0;
+    	//String msgChannelName = "msgs";
+    	//String ackChannelName = "acks";
     	int nextExpectedMsgId = 1;
     	int messageId = 0;
+    	int serverId = 0;
     	long sentTime = 0;
     	int msgSize = 0;
     	
@@ -68,10 +67,9 @@ class Consumer {
         Destination msgChannelDest = null;
         Destination ackChannelDest = null;
         Connection connection;
-        Session session;
+        Session consumerSession;
+        Session producerSession;
         
-        Connection connection2;
-        Session session2;
         
         MessageConsumer consumer;
         MessageProducer ackProducer;
@@ -80,7 +78,7 @@ class Consumer {
 
         Hashtable<String, String> env = new Hashtable<String, String>(); 
         env.put(Context.INITIAL_CONTEXT_FACTORY, "org.apache.qpid.amqp_1_0.jms.jndi.PropertiesFileInitialContextFactory"); 
-        env.put(Context.PROVIDER_URL, "test.properties"); 
+        env.put(Context.PROVIDER_URL, "amqp.properties"); 
         try {
 			context = new InitialContext(env);
 		} catch (NamingException e1) {
@@ -89,92 +87,57 @@ class Consumer {
 		} 
         
         // Lookup ConnectionFactory and Queue from the context factory
-        ConnectionFactoryImpl factory = (ConnectionFactoryImpl) context.lookup("SBCF");
+        //ConnectionFactoryImpl factory = (ConnectionFactoryImpl) context.lookup("brokerURI");
+        ConnectionFactory connectionFactory = (ConnectionFactory) context.lookup("brokerURI");
+        connection = connectionFactory.createConnection();
         //ConnectionFactory factory = = (ConnectionFactory) context.lookup("SBCF");
         //msgChannelDest = (Destination) context.lookup("MSGS");
         //ackChannelDest = (Destination) context.lookup("ACKS");
+        Queue msgQueue = (Queue) context.lookup("MSGS");
+        Queue ackQueue = (Queue) context.lookup("ACKS");
         //Topic msgTopic = (Topic) context.lookup("MSGS");
         //Topic ackTopic = (Topic) context.lookup("ACKS");
         //logger.debug("msgTopic name is: " + msgTopic.getTopicName());
         //logger.debug("ackTopic name is: " + ackTopic.getTopicName());
         
-        
-    	// Read command line args
-    	// host, port, username, password, msgChannelName ackChannelName
         /*
+    	// Read command line args
     	if(args.length == 1)
     	{
     		String propertiesFileName = args[0];
     		
     		// read settings from properties file
     	}
-    	
-        
-    	if(args.length == 6)
-    	{
-	    	host = args[0];
-	    	port = Integer.parseInt(args[1]);
-	    	user = args[2];
-	    	password = args[3];
-	    	msgChannelName = args[4];
-	    	ackChannelName = args[5];
-    	}
-    	else
-    	{
-    	     System.out.println("Usage: Consumer host port username password msgChannelName ackChannelName");
-    	     System.exit(-1);
-    	}
     	*/
     	
-
-    	/*
-        factory = new ConnectionFactoryImpl(host, port, user, password);
-
-	*/
-        logger.debug("msgChannelName: " + msgChannelName);
-        logger.debug("ackChannelName: " + ackChannelName);
-        if( msgChannelName.startsWith("topic://") ) 
-        {
-        	msgChannelDest = new TopicImpl(msgChannelName);
-        } else 
-        {
-        	msgChannelDest = new QueueImpl(msgChannelName);
-        }
         
-        
-        
-        if( ackChannelName.startsWith("topic://") ) 
-        {
-        	ackChannelDest = new TopicImpl(ackChannelName);
-        } else 
-        {
-        	ackChannelDest = new QueueImpl(ackChannelName);
-        }
-        
-        
-        
-       
-        // Create Connection
-        //connection = cf.createConnection();
-        connection = factory.createConnection(user, password);
+    	if(args.length == 1)
+    	{
+	    	clientId = Integer.parseInt(args[0]);
+		}
+    	else
+    	{
+    	     System.out.println("Usage: Consumer clientId");
+    	     System.exit(-1);
+    	}
+    	
+    	       
+        //session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+        producerSession = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+        consumerSession = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+ 
         connection.start();
-        session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-        
-        connection2 = factory.createConnection(user, password);
-        //connection2 = cf.createConnection();
-        connection2.start();
-        session2 = connection2.createSession(false, Session.AUTO_ACKNOWLEDGE);
         
         // Create message consumer
-        consumer = session.createConsumer(msgChannelDest);
+        consumer = consumerSession.createConsumer(msgQueue);
         // Create message ack
-        ackProducer = session2.createProducer(ackChannelDest);
-        
-        
+        ackProducer = producerSession.createProducer(ackQueue);
+      
+       
         BytesMessage ack = null;
 		try 
 		{
-			ack = session.createBytesMessage();
+			ack = producerSession.createBytesMessage();
 		} catch (JMSException e) 
 		{
 			// TODO Auto-generated catch block
@@ -211,6 +174,7 @@ class Consumer {
             {
             	msgSize = (int) ((BytesMessage) msg).getBodyLength();
             	messageId = ((BytesMessage) msg).readInt();
+            	serverId = ((BytesMessage) msg).readInt();
             	sentTime = ((BytesMessage) msg).readLong();
             	
             	if(nextExpectedMsgId != messageId)
@@ -223,6 +187,7 @@ class Consumer {
             			//sendNakMsg();
                         // send response message
             			ack.writeInt(messageId + nakMsg);
+            			ack.writeInt(clientId);
             			// message type
             			ack.writeInt(-1);
             			ack.writeLong(sentTime);
@@ -240,6 +205,27 @@ class Consumer {
                         ack.clearBody();
             		}
             	}
+            		
+                // send response message
+    			ack.writeInt(messageId);
+    			ack.writeInt(clientId);
+    			// message type
+    			ack.writeInt(1);
+    			ack.writeLong(sentTime);
+    			ack.writeLong(System.currentTimeMillis());
+
+                try 
+                {
+                	//System.out.println("sending ack");
+                	ackProducer.send(ack);
+    			} catch (JMSException e) 
+    			{
+    				// TODO Auto-generated catch block
+    				e.printStackTrace();
+    			}
+    			
+                ack.clearBody();
+            	
             	
             	if((messageId % 50) ==0)
             	{
@@ -253,25 +239,7 @@ class Consumer {
                 System.out.println("Unexpected message type: "+msg.getClass());
             }
             
-            
-            // send response message
-			ack.writeInt(messageId);
-			// message type
-			ack.writeInt(1);
-			ack.writeLong(sentTime);
-			ack.writeLong(System.currentTimeMillis());
-
-            try 
-            {
-            	ackProducer.send(ack);
-			} catch (JMSException e) 
-			{
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			
-            ack.clearBody();
-            
+                        
             if(messageId == -1)
             {
             	running = false;
@@ -279,7 +247,7 @@ class Consumer {
             
         }
         
-        ackProducer.close();
+        //ackProducer.close();
         consumer.close();
         System.exit(0);
     }
