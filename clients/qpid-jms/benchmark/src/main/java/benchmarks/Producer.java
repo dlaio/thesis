@@ -5,6 +5,7 @@ package benchmarks;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -13,6 +14,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Hashtable;
+import java.util.Properties;
 
 import org.apache.qpid.amqp_1_0.jms.impl.*;
 
@@ -41,7 +43,7 @@ class Producer {
     
     public static class SendProcessor implements Runnable
     {
-    	private int clientId = 0;
+    	private int producerId = 0;
     	private int numMessages = 0;
         private String stringData;
         private byte[] bytesData;
@@ -51,8 +53,8 @@ class Producer {
         Queue dest = null;
         StringBuffer testData = new StringBuffer();
     	 
-        public void setClientId(int id) {
-			this.clientId = id;
+        public void setProducerId(int id) {
+			this.producerId = id;
 		}
 
         public void setFactory(ConnectionFactory factory) {
@@ -124,7 +126,7 @@ class Producer {
 					//msg.setLongProperty("send_time", sendTime);
 					//msg.setStringProperty("data", data);
 	            	msg.writeInt(i);
-	            	msg.writeInt(clientId);
+	            	msg.writeInt(producerId);
 	            	msg.writeLong(System.currentTimeMillis());
 	            	msg.writeBytes(bytesData);
 					
@@ -161,7 +163,7 @@ class Producer {
 	        //send shutdown message
         	try {
 				msg.writeInt(-1);
-				msg.writeInt(clientId);
+				msg.writeInt(producerId);
 				msg.writeLong(System.currentTimeMillis());
 				producer.send(msg);
 			} catch (JMSException e1) 
@@ -239,7 +241,8 @@ class Producer {
 			
             System.out.println("Waiting for messages...");
             int messageId;
-            int clientId;
+            int consumerId;
+            int producerId;
             int msgType;
             long sentTime;
             long ackTimeSent;
@@ -270,7 +273,8 @@ class Producer {
                 {
                 
                 	messageId = 0;
-                	clientId = 0;
+                	producerId = 0;
+                	consumerId = 0;
                 	msgType = 0;
                 	sentTime = 0;
                 	ackTimeSent = 0;
@@ -278,7 +282,8 @@ class Producer {
 					try
 					{
 						messageId = ((BytesMessage) msg).readInt();
-						clientId = ((BytesMessage) msg).readInt();
+						producerId = ((BytesMessage)msg).readInt();
+						consumerId = ((BytesMessage) msg).readInt();
 						msgType = ((BytesMessage) msg).readInt();
 						sentTime = ((BytesMessage) msg).readLong();
 						ackTimeSent = ((BytesMessage) msg).readLong();
@@ -293,7 +298,8 @@ class Producer {
                     {
                    		//System.out.println("writing some stuff");
 						writer.write(messageId + ",");
-						writer.write(clientId + ",");
+						writer.write(producerId + ",");
+						writer.write(consumerId + ",");
 						writer.write(msgType + ",");
 						
 						if(msgType == 1)
@@ -348,44 +354,53 @@ class Producer {
     	Destination ackChannelDest = null;
     	long startTime = 0;
     	long endTime = 0;
+    	String propertyFileName = null;
     	
         InitialContext context = null;
-
+        
+  
+    	// Read command line args
+    	// broker type, host, port, username, password, send channel name, ack channel name, numMessages, use persistence 
+    	if (args.length != 1)
+    	{
+    	     System.out.println("Usage: Producer propertiesFileName");
+    	     System.exit(-1);
+    	}
+    	else
+    	{
+    		propertyFileName = args[0];
+	    	//numMessages = Integer.parseInt(args[1]);
+	    	//msgSize = Integer.parseInt(args[2]);
+    	}
+    	
         Hashtable<String, String> env = new Hashtable<String, String>(); 
         env.put(Context.INITIAL_CONTEXT_FACTORY, "org.apache.qpid.amqp_1_0.jms.jndi.PropertiesFileInitialContextFactory"); 
-        env.put(Context.PROVIDER_URL, "amqp.properties"); 
-        try {
+        env.put(Context.PROVIDER_URL, propertyFileName); 
+        try 
+        {
 			context = new InitialContext(env);
-		} catch (NamingException e1) {
+		} catch (NamingException e1) 
+		{
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
-		} 
+		}
         
-        // Lookup ConnectionFactory and Queue from the context factory
-        //ConnectionFactoryImpl factory = (ConnectionFactoryImpl) context.lookup("brokerURI");
-        //ConnectionFactory factory = = (ConnectionFactory) context.lookup("SBCF");
-        //msgChannelDest = (Destination) context.lookup("MSGS");
-        //ackChannelDest = (Destination) context.lookup("ACKS");
+		Properties properties = new Properties();
+		try {
+		  properties.load(new FileInputStream(propertyFileName));
+		} catch (IOException e) 
+		{
+			e.printStackTrace();
+		}
         
         ConnectionFactory connectionFactory = (ConnectionFactory) context.lookup("brokerURI");
         //connection = connectionFactory.createConnection();
         Queue msgQueue = (Queue) context.lookup("MSGS");
         Queue ackQueue = (Queue) context.lookup("ACKS");
-    	
-  
-    	// Read command line args
-    	// broker type, host, port, username, password, send channel name, ack channel name, numMessages, use persistence 
-    	if (args.length != 3)
-    	{
-    	     System.out.println("Usage: Producer brokerType numMessages msgSize");
-    	     System.exit(-1);
-    	}
-    	else
-    	{
-	    	brokerType = args[0];
-	    	numMessages = Integer.parseInt(args[1]);
-	    	msgSize = Integer.parseInt(args[2]);
-    	}
+        
+        brokerType = properties.getProperty("brokerType");
+        numMessages = Integer.parseInt(properties.getProperty("numMessages"));
+        msgSize = Integer.parseInt(properties.getProperty("msgSize"));
     	
     	
     	// setup producer
@@ -393,6 +408,7 @@ class Producer {
     	sendProcessor.setDestination(msgQueue);
     	sendProcessor.setNumMessages(numMessages);
     	sendProcessor.setMsgSize(msgSize);
+    	sendProcessor.setProducerId(1);
     	
     	ackProcessor.setFactory(connectionFactory);
     	ackProcessor.setDestination(ackQueue);
@@ -403,7 +419,8 @@ class Producer {
         FileWriter csvOutput = new FileWriter(csvFile);
         BufferedWriter writer = new BufferedWriter( csvOutput );
         writer.write("Message ID,");
-        writer.write("Client ID,");
+        writer.write("Producer ID,");
+        writer.write("Consumer ID,");
         writer.write("Result,");
         writer.write("Sent time,");
         writer.write("Ack Sent Time,");

@@ -2,8 +2,11 @@
  */
 package benchmarks;
 
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.Enumeration;
 import java.util.Hashtable;
+import java.util.Properties;
 
 import org.apache.qpid.amqp_1_0.jms.impl.*;
 
@@ -56,7 +59,7 @@ class Consumer {
     	//String ackChannelName = "acks";
     	int nextExpectedMsgId = 1;
     	int messageId = 0;
-    	int serverId = 0;
+    	int producerId = 0;
     	long sentTime = 0;
     	int msgSize = 0;
     	
@@ -69,7 +72,7 @@ class Consumer {
         Connection connection;
         Session consumerSession;
         Session producerSession;
-        
+        String contextFileName = null;
         
         MessageConsumer consumer;
         MessageProducer ackProducer;
@@ -78,48 +81,51 @@ class Consumer {
 
         Hashtable<String, String> env = new Hashtable<String, String>(); 
         env.put(Context.INITIAL_CONTEXT_FACTORY, "org.apache.qpid.amqp_1_0.jms.jndi.PropertiesFileInitialContextFactory"); 
-        env.put(Context.PROVIDER_URL, "amqp.properties"); 
-        try {
-			context = new InitialContext(env);
-		} catch (NamingException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		} 
-        
-        // Lookup ConnectionFactory and Queue from the context factory
-        //ConnectionFactoryImpl factory = (ConnectionFactoryImpl) context.lookup("brokerURI");
-        ConnectionFactory connectionFactory = (ConnectionFactory) context.lookup("brokerURI");
-        connection = connectionFactory.createConnection();
-        //ConnectionFactory factory = = (ConnectionFactory) context.lookup("SBCF");
-        //msgChannelDest = (Destination) context.lookup("MSGS");
-        //ackChannelDest = (Destination) context.lookup("ACKS");
-        Queue msgQueue = (Queue) context.lookup("MSGS");
-        Queue ackQueue = (Queue) context.lookup("ACKS");
-        //Topic msgTopic = (Topic) context.lookup("MSGS");
-        //Topic ackTopic = (Topic) context.lookup("ACKS");
-        //logger.debug("msgTopic name is: " + msgTopic.getTopicName());
-        //logger.debug("ackTopic name is: " + ackTopic.getTopicName());
-        
-        /*
+       
+          
     	// Read command line args
     	if(args.length == 1)
     	{
-    		String propertiesFileName = args[0];
-    		
-    		// read settings from properties file
+    		contextFileName = args[0];
     	}
-    	*/
-    	
-        
-    	if(args.length == 1)
-    	{
-	    	clientId = Integer.parseInt(args[0]);
-		}
     	else
     	{
-    	     System.out.println("Usage: Consumer clientId");
+    	     System.out.println("Usage: Consumer contextFileName");
     	     System.exit(-1);
     	}
+    	
+		logger.debug("context file name is: " + contextFileName);
+		env.put(Context.PROVIDER_URL, contextFileName); 
+		  
+		try 
+		{
+			context = new InitialContext(env);
+		} catch (NamingException e1)
+		{
+			e1.printStackTrace();
+		} 
+		
+		Properties properties = new Properties();
+		try {
+		  properties.load(new FileInputStream(contextFileName));
+		} catch (IOException e) 
+		{
+			e.printStackTrace();
+		}
+          
+		// Lookup ConnectionFactory and Queue from the context factory
+		ConnectionFactory connectionFactory = (ConnectionFactory) context.lookup("brokerURI");
+		connection = connectionFactory.createConnection();
+		Queue msgQueue = (Queue) context.lookup("MSGS");
+		Queue ackQueue = (Queue) context.lookup("ACKS");
+		
+		
+		clientId = Integer.parseInt(properties.getProperty("clientId"));
+		logger.debug("clientId is: " + clientId);
+		//Topic msgTopic = (Topic) context.lookup("MSGS");
+		//Topic ackTopic = (Topic) context.lookup("ACKS");
+		//logger.debug("msgTopic name is: " + msgTopic.getTopicName());
+		//logger.debug("ackTopic name is: " + ackTopic.getTopicName());
     	
     	       
         //session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
@@ -174,7 +180,7 @@ class Consumer {
             {
             	msgSize = (int) ((BytesMessage) msg).getBodyLength();
             	messageId = ((BytesMessage) msg).readInt();
-            	serverId = ((BytesMessage) msg).readInt();
+            	producerId = ((BytesMessage) msg).readInt();
             	sentTime = ((BytesMessage) msg).readLong();
             	
             	if(nextExpectedMsgId != messageId)
@@ -187,6 +193,7 @@ class Consumer {
             			//sendNakMsg();
                         // send response message
             			ack.writeInt(messageId + nakMsg);
+            			ack.writeInt(producerId);
             			ack.writeInt(clientId);
             			// message type
             			ack.writeInt(-1);
@@ -208,6 +215,7 @@ class Consumer {
             		
                 // send response message
     			ack.writeInt(messageId);
+    			ack.writeInt(producerId);
     			ack.writeInt(clientId);
     			// message type
     			ack.writeInt(1);
