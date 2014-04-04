@@ -118,27 +118,40 @@ class Consumer {
 		connection = connectionFactory.createConnection();
 		Queue msgQueue = (Queue) context.lookup("MSGS");
 		Queue ackQueue = (Queue) context.lookup("ACKS");
-		
-		
+				
 		clientId = Integer.parseInt(properties.getProperty("clientId"));
 		logger.debug("clientId is: " + clientId);
 		//Topic msgTopic = (Topic) context.lookup("MSGS");
 		//Topic ackTopic = (Topic) context.lookup("ACKS");
 		//logger.debug("msgTopic name is: " + msgTopic.getTopicName());
 		//logger.debug("ackTopic name is: " + ackTopic.getTopicName());
+		
+		
+    	//session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+    	producerSession = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+    	consumerSession = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+
+    	connection.start();
     	
+        if(false)
+        {
     	       
-        //session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-        producerSession = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-        consumerSession = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
- 
-        connection.start();
-        
-        // Create message consumer
-        consumer = consumerSession.createConsumer(msgQueue);
-        // Create message ack
-        ackProducer = producerSession.createProducer(ackQueue);
-      
+        	// Create message consumer
+        	consumer = consumerSession.createConsumer(msgQueue);
+        	// Create message ack
+        	ackProducer = producerSession.createProducer(ackQueue);
+        }
+        else
+        {
+        	ackChannelDest = new QueueImpl("queue://acks");
+        	msgChannelDest = new QueueImpl("queue://msgs");
+        	
+        	consumer = consumerSession.createConsumer(msgChannelDest);
+        	ackProducer = producerSession.createProducer(ackChannelDest);
+        	
+        }
+
+       
        
         BytesMessage ack = null;
 		try 
@@ -158,25 +171,7 @@ class Consumer {
         	//System.out.println("calling receive...");
             Message msg = consumer.receive();
             //System.out.println("returned from receive...");
-            if( msg instanceof  TextMessage ) 
-            {
-            	/*
-                String body = ((TextMessage) msg).getText();
-                System.out.println(String.format("Received %d bytes", body.length()));
-                if( "SHUTDOWN".equals(body)) 
-                {
-                    long diff = System.currentTimeMillis() - start;
-                    System.out.println(String.format("Received %d in %.2f seconds", count, (1.0*diff/1000.0)));
-                    connection.close();
-                    System.exit(1);
-                } 
-                else 
-                {                	
-                    count ++;
-                }
-                */
-            } 
-            else if( msg instanceof  BytesMessage ) 
+            if( msg instanceof  BytesMessage ) 
             {
             	msgSize = (int) ((BytesMessage) msg).getBodyLength();
             	messageId = ((BytesMessage) msg).readInt();
@@ -186,7 +181,7 @@ class Consumer {
             	if(nextExpectedMsgId != messageId)
             	{
             		int numDroppedMessages = messageId - nextExpectedMsgId;
-            		System.out.println(String.format("Dropped %d messages", numDroppedMessages));
+            		System.out.println(String.format("Dropped %d messages (%d/%d)", numDroppedMessages, nextExpectedMsgId, messageId));
             		// TODO - send dropped message NAK
             		for(int nakMsg = 0; nakMsg < numDroppedMessages; nakMsg++)
             		{

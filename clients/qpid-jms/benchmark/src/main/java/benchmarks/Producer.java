@@ -50,11 +50,18 @@ class Producer {
 		private long sendTime;
 		private int msgSize;
 		ConnectionFactory factory = null; 
-        Queue dest = null;
+        Queue queue = null;
+        Destination dest = null;
+        boolean createQueue = false;
+        
         StringBuffer testData = new StringBuffer();
     	 
         public void setProducerId(int id) {
 			this.producerId = id;
+		}
+        
+        public void setCreateQueue() {
+			createQueue = true;
 		}
 
         public void setFactory(ConnectionFactory factory) {
@@ -62,7 +69,7 @@ class Producer {
 		}
         
         public void setDestination(Queue queue) {
-        	this.dest = queue;
+        	this.queue = queue;
         }
 
 
@@ -91,11 +98,25 @@ class Producer {
 	        Session session = null;
 	        Connection connection = null;
 	        MessageProducer producer = null;
-			try {
+			try 
+			{
 				connection = factory.createConnection();
 				connection.start();
 				session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-				producer = session.createProducer(dest);
+				
+	
+				
+				if(createQueue == false)
+				{
+					producer = session.createProducer(queue);
+				}
+				else
+				{
+					dest = new QueueImpl("queue://msgs");
+					producer = session.createProducer(dest);
+				}
+				
+				
 				producer.setDeliveryMode(DeliveryMode.NON_PERSISTENT);
 				
 			} catch (JMSException e) {
@@ -192,15 +213,20 @@ class Producer {
     	boolean running = true;
     	MessageConsumer consumer = null;
     	ConnectionFactory factory = null;
-    	Queue dest = null;
+    	Queue queue = null;
+    	Destination dest = null;
+    	boolean createQueue = false;
 
+        public void setCreateQueue() {
+			createQueue = true;
+		}
     	
         public void setFactory(ConnectionFactory factory) {
 			this.factory = factory;
 		}
         
-        public void setDestination(Queue queue) {
-        	this.dest = queue;
+        public void setQueue(Queue queue) {
+        	this.queue = queue;
         }
 
 
@@ -233,7 +259,18 @@ class Producer {
 				connection = factory.createConnection();
 				connection.start();
 				session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-				consumer = session.createConsumer(dest);
+				
+				if(createQueue == false)
+				{
+					consumer = session.createConsumer(queue);
+				}
+				else
+				{
+					dest = new QueueImpl("queue://acks");
+					consumer = session.createConsumer(dest);
+				}
+				
+				
 			} catch (JMSException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -350,8 +387,6 @@ class Producer {
     	String brokerType = "unknown";
     	int numMessages = 1000;
     	int msgSize = 1000;
-    	Destination msgChannelDest = null;
-    	Destination ackChannelDest = null;
     	long startTime = 0;
     	long endTime = 0;
     	String propertyFileName = null;
@@ -410,8 +445,14 @@ class Producer {
     	sendProcessor.setMsgSize(msgSize);
     	sendProcessor.setProducerId(1);
     	
+    	if(brokerType.equals("APOLLO"))
+    	{
+    		ackProcessor.setCreateQueue();
+    		sendProcessor.setCreateQueue();
+    	}
+    	
     	ackProcessor.setFactory(connectionFactory);
-    	ackProcessor.setDestination(ackQueue);
+    	ackProcessor.setQueue(ackQueue);
         
     	// Create output file
         DateFormat df = new SimpleDateFormat("yyyy-MM-dd_HH.mm.ss");  
