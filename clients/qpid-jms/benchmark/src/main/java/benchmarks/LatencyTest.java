@@ -23,7 +23,7 @@ import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 
-class Producer {
+class LatencyTest {
 
     public static String readFile(String path) throws IOException
     {
@@ -304,169 +304,8 @@ class Producer {
     	
     }
     
-    public static class AckProcessor implements Runnable
-    {
-    	BufferedWriter writer;
-    	boolean running = true;
-    	MessageConsumer consumer = null;
-    	ConnectionFactory factory = null;
-    	Queue queue = null;
-    	Destination dest = null;
-    	boolean createQueue = false;
-
-        public void setCreateQueue() {
-			createQueue = true;
-		}
-    	
-        public void setFactory(ConnectionFactory factory) {
-			this.factory = factory;
-		}
-        
-        public void setQueue(Queue queue) {
-        	this.queue = queue;
-        }
-
-
-		public void setOuputFile(BufferedWriter writer)
-        {
-        	this.writer = writer;
-        }
-        
-        public void terminate()
-        {
-        	
-        	running = false;
-        	try {
-				consumer.close();
-			} catch (JMSException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-        	
-        }
-        
-        @Override
-    	public void run()
-    	{
-    		
-            Session session = null;
-            Connection connection = null;
-            
-			try {
-				connection = factory.createConnection();
-				connection.start();
-				session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-				
-				if(createQueue == false)
-				{
-					consumer = session.createConsumer(queue);
-				}
-				else
-				{
-					dest = new QueueImpl("queue://acks");
-					consumer = session.createConsumer(dest);
-				}
-				
-				
-			} catch (JMSException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			
-            System.out.println("Waiting for messages...");
-            int messageId;
-            int consumerId;
-            int producerId;
-            int msgType;
-            long sentTime;
-            long ackTimeSent;
-            long ackTimeRecvd;
-            while(running == true) 
-            {
-            	
-                Message msg = null;
-				try {
-					msg = consumer.receive();
-				} catch (JMSException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-
-				if( msg instanceof  BytesMessage ) 
-                {
-                	messageId = 0;
-                	producerId = 0;
-                	consumerId = 0;
-                	msgType = 0;
-                	sentTime = 0;
-                	ackTimeSent = 0;
-                	ackTimeRecvd = 0;
-					try
-					{
-						messageId = ((BytesMessage) msg).readInt();
-						producerId = ((BytesMessage)msg).readInt();
-						consumerId = ((BytesMessage) msg).readInt();
-						msgType = ((BytesMessage) msg).readInt();
-						sentTime = ((BytesMessage) msg).readLong();
-						ackTimeSent = ((BytesMessage) msg).readLong();
-						ackTimeRecvd = System.currentTimeMillis();
-					} catch (JMSException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-					
-					//System.out.println(String.format("message id: %d - (%d/%d/%d)", messageId, sentTime, ackTimeSent, ackTimeRecvd));
-                   	try 
-                    {
-                   		//System.out.println("writing some stuff");
-						writer.write(messageId + ",");
-						writer.write(producerId + ",");
-						writer.write(consumerId + ",");
-						writer.write(msgType + ",");
-						
-						if(msgType == 1)
-						{
-							writer.write(sentTime + ",");
-							writer.write(ackTimeSent + ",");
-							writer.write(ackTimeRecvd + ",");
-						}
-						else
-						{
-							writer.write(0 + ",");
-							writer.write(ackTimeSent + ",");
-							writer.write(ackTimeRecvd + ",");
-						}
-                    	writer.newLine();
-                    } catch (IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-
-
-                    if(messageId == -1)
-                    {
-                    	running = false;
-                    }
-                
-                }
-                else 
-                {
-                    //System.out.println("Unexpected message type: "+msg.getClass());
-                }
-                
-            }
-        }
-    }
-    
-    	
-    	
-    
-
     public static void main(String []args) throws Exception 
-    {
-    	//AckProcessor ackProcessor = new AckProcessor();
-    	//Thread ackThread = null;
-    	
+    {    	
     	SendProcessor sendProcessor = new SendProcessor();
     	Thread sendThread = null;
     	String brokerType = "unknown";
@@ -482,7 +321,7 @@ class Producer {
     	// Read command line args
     	if (args.length != 1)
     	{
-    	     System.out.println("Usage: Producer propertiesFileName");
+    	     System.out.println("Usage: LatencyTest propertiesFileName");
     	     System.exit(-1);
     	}
     	else
@@ -531,16 +370,12 @@ class Producer {
     	
     	if(brokerType.equals("APOLLO"))
     	{
-    		//ackProcessor.setCreateQueue();
     		sendProcessor.setCreateQueue();
     	}
     	
-    	//ackProcessor.setFactory(connectionFactory);
-    	//ackProcessor.setQueue(ackQueue);
-        
     	// Create output file
         DateFormat df = new SimpleDateFormat("yyyy-MM-dd_HH.mm.ss");  
-        File csvFile = new File(brokerType + "_" + numMessages + "_" + msgSize + "_" + df.format(new Date()) +".csv");  
+        File csvFile = new File(brokerType + "_latency_" + numMessages + "_" + msgSize + "_" + df.format(new Date()) +".csv");  
         FileWriter csvOutput = new FileWriter(csvFile);
         BufferedWriter writer = new BufferedWriter( csvOutput );
         writer.write("Message ID,");
@@ -553,16 +388,10 @@ class Producer {
         writer.newLine();
         
         // set output file in ackProcessor
-    	//ackProcessor.setOuputFile(writer);
         sendProcessor.setOuputFile(writer);
     	
     	// Create processing threads
-    	//ackThread = new Thread(ackProcessor);
     	sendThread = new Thread(sendProcessor);
-        
-    	//ackThread.start();
-    	// TODO - replace with a function that returns when ack thread has started and connected
-        Thread.sleep(2000);
         
         // start the message producer
         startTime = System.currentTimeMillis();
@@ -571,27 +400,17 @@ class Producer {
 
         // wait for threads to finish
         sendThread.join();
-        //ackThread.join();
         endTime = System.currentTimeMillis();
         
         System.out.printf("Start time: %d\n", startTime);
         System.out.printf("End time: %d\n", endTime);
         float timeDeltaSec = ((float)(endTime - startTime)/1000);
-        float throughput = numMessages / timeDeltaSec;
-        float bandwidth = ((float)(numMessages * msgSize) / timeDeltaSec/1000000);
-        
+
         System.out.printf("runtime: %f sec\n", timeDeltaSec);
-        System.out.printf("throughput: %f messages/sec\n", throughput);
-        System.out.printf("bandwidth: %f MB/sec\n", bandwidth);
         
         writer.newLine();
         writer.write("runtime," + timeDeltaSec + ",sec");
         writer.newLine();
-        writer.write("throughput," + throughput + ",msgs/sec");
-        writer.newLine();
-        writer.write("bandwidth," + bandwidth + ",MB/sec");
-        writer.newLine();
-        
         
         // close output files
         writer.flush();
