@@ -168,15 +168,12 @@ There are several major open source AMQP broker implementations.
 \includegraphics[scale=.5]{broker_popularity}  \caption{Google trend data for AMQP implementations}\label{Figure 1}  \end{figure}
 
 
-%\todo{comparision table with all chosen AMQP implementations (client languages/implementation/version/etc)}
-
 \subsection{RabbitMQ}
 RabbitMQ is an open source message broker written in the Erlang programming language.  \todo{http://www.rabbitmq.com} RabbitMQ is developed by and supported by Rabbit Technologies Ltd.  It is actively being developed, the latest stable version (3.2.4) was released on March 4, 2014.  It is licensed under the Mozilla Public License \cite{rabbitmq-wikipedia}.
 
 The development history/management of RabbitMQ is complicated.  Originally developed by Lshift, the project was moved to an independent company Rabbit Technologies Ltd, which was cofounded by Monadic and CohesiveFT.  In 2013, Rabbit Technologies Ltd. was acquired by SpringSource, a division of VMware, Inc. \todo{http://www.lshift.net/blog/2010/04/13/rabbitmq-2}.  As of March 2014 - commercial support for RabbitMQ was being provided by Pivotal, Ltd \todo{http://www.gopivotal.com/support} \todo{work out relationship with VMware}.
 
 RabbitMQ is cross platform and has bindings/clients for a wide range of systems/programming languages.  \todo{http://www.rabbitmq.com/devtools.html}.  has bindings/client for many different languages.  RabbitMQ has comprehensive documentation, and supports Clustering, High Availability, SSL, Management, etc. \todo{complete}
-
 
 \subsection{ActiveMQ}
 ActiveMQ is an open source message broker written in Java.  ActiveMQ is developed by the Apache Software Foundation and as of \todo{date} the most recent stable version is 5.9.0 released on October 21, 2013.
@@ -199,42 +196,72 @@ Tim Fox started the HornetQ project in 2009 and led the project until the end of
 
 HornetQ supports many important features.  It supports the STOMP \todo{how does this compare to AMQP} protocol and is 100\% JMS compliant.  It supports clustering for scalability and reliability and master/slave architecture for fault tolerance.  It leverages the high-performance Netty NIO connector over TCP and SSL.  The documentation for HornetQ is comprehensive and up to date.  
 
-As of \todo{date} HornetQ holds the SPECjms2007 benchmark record \todo{citation needed}.  
+As of 4/10/2014 HornetQ holds the SPECjms2007 benchmark record \todo{citation needed}.  
 
 %\todo{http://en.wikipedia.org/wiki/HornetQ}
 
 
 \subsection{Client implementations}
+There are many different AMQP client libraries for connecting a software components to an AMQP broker.  There are ports for most programming languages, for example RabbitMQ lists 175 different client libraries for over 21 different programming languages. %http://www.rabbitmq.com/devtools.html
+
+The maturity and functionally for each client vary greatly.  Granted, many of the client libraries are open source and have low activity, but there are several open source client libraries with active support.  There are also closed source, proprietary implementations and while they may be free to use there are license restrictions that make them unuseable for this project \footnote{Specificially SwiftMQ has a clause in their license that prohibits publishing benchmarking results without company approval} One of the most active and widely used client libraries is Apache's Qpid Proton library.  %http://qpid.apache.org/components/messenger/index.html
+Which has both C and Java implementations.  \todo{more}
+
+\begin{figure}\centering\vspace{2.0in} 
+\includegraphics[scale=.5]{client_comparision}  \caption{Summary of available AMQP clients}\label{Figure 1}  \end{figure}
 
 \chapter{Methodology}
-Marsh, Sampat, Potluri, Panda in [3] developed broker network architectures and benchmarked to support large federated broker networks and benchmarked the messaging passing performance.  They experimented with multi-level broker architectures and multi-consumer fanout patterns to find the optimal broker design patterns.  All of their work was performed with Apache Qpid implementation [3].  
+There are three independent steps for generating the testing data for this project.  Each step will be completed independently using the same lab setup, computing hardware and software.  As much as possible outside factors will be minimized to help ensure that the collected data is comparable.  AMQP brokers are complicated software components, with many interacting parts so care must be taken to ensure that the data collected is reliable.  
 
-Subramoni, Marsh, Narravula, Lai and Panda in [1] designed and developed benchmarks for MOM broker networks building using the Message Passing Interface (MPI) benchmarks developed by Ohio State University Network-Based Computing Laboratory’s [1] and the Standard Performance Evaluation Corporation (SPEC) MOM benchmarks  [1].  Benchmarks such as the Direct Exchange - Single Publisher Single Consumer (DE-SPSC) and Direct Exchange - Multiple Publishers Multiple Consumers (DE-MPMC) benchmarks [1] will be implemented for each AMQP implementation 
+For the first step baseline performance data will be collected on the performance of each AMQP broker implementation in isolation.  There have been many experiments run with this configuration %http://stackoverflow.com/questions/7921324/performance-comparison-between-zeromq-rabbitmq-and-apache-qpid, http://predic8.com/activemq-hornetq-rabbitmq-apollo-qpid-comparison.htm
+While this step is not novel it will allow us to compare results with independent AMQP evaluations to ensure that the data that the benchmark software collects is reasonable.
 
-This project will combine the methodologies used in these experiments and add an additional variable, different broker implementations to determine what the performance impact of a heterogenous broker network on messaging performance.
+The second step for this project is to create simple broker networks of homogenous AMQP broker implementations and collect benchmark information.  The broker network configurations will follow the designs described by  Marsh, Sampat, Potluri, Panda in [3] so that this data may again be compared to an independent evaluation to ensure that the collected results are valid.
 
-In addition to these benchmarks, additional information will be collected in order to compare the performance of the broker implementations.
+The third and final step is to create heterogeneous broker networks using the same broker network architecture in step two.  This will allow for direct comparison of the impact of integrating different AMQP broker networks into a single system.  This will model one of the goals of the AMQP working group and will provide meaningful, real world data on the interoperability and performance of the AMQP broker implementations. 
 
+\section{Networking benchmark background}
 
-\begin{figure}\centering\vspace{2.0in} 
-\includegraphics{bandwidth_latency_throughput}  \caption{Relation between bandwidth, latency and througput}\label{Figure 1}  \end{figure}
-
+\section{Hardware setup}
 A lab environment will be setup to isolate the tests from outside message traffic.  High-end workstation, class laptop computers and business class network equipment will be used.  The computers will use the latest Long-Term Support version of the Ubuntu Server operating system (12.04LTS) and will be configured to minimize background daemons and processes.  The times of all systems will be synchronized using a local NTP server. A complete listing of software versions used will be published with the results of this research.
 
+\subsection{Network design}
 
-Because these implementations were designed around the message traffic of the financial services sector they excel at passing small messages and focus on message throughput.  There are performance differences between each implementation and generic benchmarks for each implementation are available \cite{todo}\cite{todo}.
 
-\begin{figure}\centering\vspace{2.0in} 
-\includegraphics{test_setup}  \caption{Test setup overview}\label{Figure 1}  \end{figure}
+\section{Benchmark design}
+
+The design of the benchmarks for this experiment we modeled after the work done by Subramoni, Marsh, Narravula, Lai and Panda in \cite{Subramoni} which in turn based their benchmarks on Ohio State University Micro-benchmarks \todo{citation needed}.  
 
 \subsection{Existing Benchmarks}
 There are other existing and published benchmarks for MOM systems.  The most widely known is SPECjms2007 \todo{http://www.spec.org/osg/jms2007/}.  It was the first industry standard benchmark for evaluating the Java Messaging Service (JMS).
 
 SPECjms2007 is designed to model a messaging system of a grocery store - it simulates all of the messages needed to maintain inventory/purchasing/etc.  It does this to provide a comprehensive - real-world evaluation of a messaging system.  The benchmark was expanded by \todo{find name and reference} to originally benchmark the Apache Qpid MOM system \{citation needed}.  The benchmark needs to be licensed from the SPEC organization.  
 
-\subsection{Developed benchmarks}
 
-The design of the benchmarks for this experiment we modeled after the work done by Subramoni, Marsh, Narravula, Lai and Panda in \cite{Subramoni} which in turn based their benchmarks on Ohio State University Micro-benchmarks \todo{citation needed}.  
+\subsection{Format of test data}
+
+
+%Each step is setup to collect meaningful data about the performance of each AMQP broker implemenation
+
+ %developed broker network architectures and benchmarked to support large federated broker networks and benchmarked the messaging passing performance.  They experimented with multi-level broker architectures and multi-consumer fanout patterns to find the optimal broker design patterns.  All of their work was performed with Apache Qpid implementation [3].  
+
+%Subramoni, Marsh, Narravula, Lai and Panda in [1] designed and developed benchmarks for MOM broker networks building using the Message Passing Interface (MPI) benchmarks developed by Ohio State University Network-Based Computing Laboratory’s [1] and the Standard Performance Evaluation Corporation (SPEC) MOM benchmarks  [1].  Benchmarks such as the Direct Exchange - Single Publisher Single Consumer (DE-SPSC) and Direct Exchange - Multiple Publishers Multiple Consumers (DE-MPMC) benchmarks [1] will be implemented for each AMQP implementation 
+
+%This project will combine the methodologies used in these experiments and add an additional variable, different broker implementations to determine what the performance impact of a heterogenous broker network on messaging performance.
+
+%In addition to these benchmarks, additional information will be collected in order to compare the performance of the broker implementations.
+
+
+\begin{figure}\centering\vspace{2.0in} 
+\includegraphics{bandwidth_latency_throughput}  \caption{Relation between bandwidth, latency and througput}\label{Figure 1}  \end{figure}
+
+
+
+
+Because these implementations were designed around the message traffic of the financial services sector they excel at passing small messages and focus on message throughput.  There are performance differences between each implementation and generic benchmarks for each implementation are available \cite{todo}\cite{todo}.
+
+\begin{figure}\centering\vspace{2.0in} 
+\includegraphics{test_setup}  \caption{Test setup overview}\label{Figure 1}  \end{figure}
 
 
 
@@ -244,7 +271,6 @@ The design of the benchmarks for this experiment we modeled after the work done 
 \includegraphics{direct_connect}  \caption{Direct Exchange - Single Publisher Single Consumer (DE-SPSC)}\label{Figure 2}  \end{figure}
 
 \subsection{Direct Exchange - Multiple Publishers Multiple Consumers (DE-MPMC)}
-
 
 \subsection{Single Publisher - Multiple Consumer (SPMC)}
 
@@ -260,6 +286,15 @@ The design of the benchmarks for this experiment we modeled after the work done 
 %\missingfigure{something}
 
 \chapter{Experimental Results}
+
+From the beginning of the project creating a simple AMQP producer and consumer proved to be more difficult than expected.  Even though all of the AMQP broker implementations chosen to benchmark claim to support AMQP 1.0 each of them required more work than anticipated to get data flowing.  
+
+Apache ActiveMQ worked out of the box.  
+Apache Apollo needed additional client library calls before clients could exchange data.
+Apache Qpid 
+RabbitMQ was a nonstarter.  While they claim to have an AMQP 1.0 plugin to enable the protocol on their broker implementation, no amount of configuration of either the broker or the client resulted in a working message passing instance.  Investigation into the issue revealed that in spite of adding and enabling the AMQP 1.0 plugin to RabbitMQ the broker was identifying the underlying transport as 0-9-1.  Frustratingly, although the Qpid JMS Client library also claimed to be configurable to support AMQP 0-9-1 no amount of client side configuration or modification of the benchmark software resulted in a viable message passing system.
+It was a similar experience with HornetQ, which claims to have native AMQP 1.0 support. 
+
 \subsection{Experimental Setup}
 And so on, for more chapters.
 Another citation for the bibliography:\cite{anotherbook}

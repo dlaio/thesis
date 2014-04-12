@@ -77,6 +77,8 @@ class Consumer {
         MessageConsumer consumer;
         MessageProducer ackProducer;
         
+        String brokerType = null;
+        
         InitialContext context = null;
 
         Hashtable<String, String> env = new Hashtable<String, String>(); 
@@ -120,12 +122,9 @@ class Consumer {
 		Queue ackQueue = (Queue) context.lookup("ACKS");
 				
 		clientId = Integer.parseInt(properties.getProperty("clientId"));
-		logger.debug("clientId is: " + clientId);
-		//Topic msgTopic = (Topic) context.lookup("MSGS");
-		//Topic ackTopic = (Topic) context.lookup("ACKS");
-		//logger.debug("msgTopic name is: " + msgTopic.getTopicName());
-		//logger.debug("ackTopic name is: " + ackTopic.getTopicName());
+		brokerType = properties.getProperty("brokerType");
 		
+		logger.debug("clientId is: " + clientId);
 		
     	//session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
     	producerSession = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
@@ -133,21 +132,30 @@ class Consumer {
 
     	connection.start();
     	
-        if(false)
-        {
-    	       
-        	// Create message consumer
-        	consumer = consumerSession.createConsumer(msgQueue);
-        	// Create message ack
-        	ackProducer = producerSession.createProducer(ackQueue);
-        }
-        else
+    	//APOLLO
+        if(brokerType.equalsIgnoreCase("APOLLO"))
         {
         	ackChannelDest = new QueueImpl("queue://acks");
         	msgChannelDest = new QueueImpl("queue://msgs");
         	
-        	consumer = consumerSession.createConsumer(msgChannelDest);
+        	consumer = consumerSession.createConsumer(msgChannelDest, null);
         	ackProducer = producerSession.createProducer(ackChannelDest);
+        }
+        //HORNETQ
+        else if(false)
+        {
+        	// Create message consumer
+        	consumer = consumerSession.createConsumer(msgQueue, "color = red");
+        	// Create message ack
+        	ackProducer = producerSession.createProducer(ackQueue);
+        	
+        }
+        else
+        {
+        	// Create message consumer
+        	consumer = consumerSession.createConsumer(msgQueue);
+        	// Create message ack
+        	ackProducer = producerSession.createProducer(ackQueue);
         	
         }
 

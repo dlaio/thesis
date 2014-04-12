@@ -50,11 +50,34 @@ class Producer {
 		private long sendTime;
 		private int msgSize;
 		ConnectionFactory factory = null; 
-        Queue queue = null;
-        Destination dest = null;
+        Queue msgQueue = null;
+    	Queue ackQueue = null;
+    	Destination msgDest = null;
+        Destination ackDest = null;
         boolean createQueue = false;
         
+    	BufferedWriter writer;
+    	boolean running = true;
+        Session session = null;
+        Connection connection = null;
+        MessageProducer producer = null;
+        MessageConsumer consumer = null;
+        
         StringBuffer testData = new StringBuffer();
+        
+        int messageId;
+        int consumerId;
+        int msgType;
+        long sentTime;
+        long ackTimeSent;
+        long ackTimeRecvd;
+        
+        
+        
+		public void setOuputFile(BufferedWriter writer)
+        {
+        	this.writer = writer;
+        }
     	 
         public void setProducerId(int id) {
 			this.producerId = id;
@@ -68,8 +91,12 @@ class Producer {
 			this.factory = factory;
 		}
         
-        public void setDestination(Queue queue) {
-        	this.queue = queue;
+        public void setMsgQueue(Queue queue) {
+        	this.msgQueue = queue;
+        }
+        
+        public void setAckQueue(Queue queue) {
+        	this.ackQueue = queue;
         }
 
 
@@ -80,6 +107,82 @@ class Producer {
 		public void setMsgSize(int msgSize) {
 			this.msgSize = msgSize;
 		}
+		
+		private void receiveAck()
+		{
+            Message msg = null;
+			
+            try {
+				msg = consumer.receive();
+			} catch (JMSException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+				
+			if( msg instanceof  BytesMessage ) 
+	        {
+	        	messageId = 0;
+	        	producerId = 0;
+	        	consumerId = 0;
+	        	msgType = 0;
+	        	sentTime = 0;
+	        	ackTimeSent = 0;
+	        	ackTimeRecvd = 0;
+				try
+				{
+					messageId = ((BytesMessage) msg).readInt();
+					producerId = ((BytesMessage)msg).readInt();
+					consumerId = ((BytesMessage) msg).readInt();
+					msgType = ((BytesMessage) msg).readInt();
+					sentTime = ((BytesMessage) msg).readLong();
+					ackTimeSent = ((BytesMessage) msg).readLong();
+					ackTimeRecvd = System.currentTimeMillis();
+				} catch (JMSException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
+				//System.out.println(String.format("message id: %d - (%d/%d/%d)", messageId, sentTime, ackTimeSent, ackTimeRecvd));
+	           	try 
+	            {
+	           		//System.out.println("writing some stuff");
+					writer.write(messageId + ",");
+					writer.write(producerId + ",");
+					writer.write(consumerId + ",");
+					writer.write(msgType + ",");
+					
+					if(msgType == 1)
+					{
+						writer.write(sentTime + ",");
+						writer.write(ackTimeSent + ",");
+						writer.write(ackTimeRecvd + ",");
+					}
+					else
+					{
+						writer.write(0 + ",");
+						writer.write(ackTimeSent + ",");
+						writer.write(ackTimeRecvd + ",");
+					}
+	            	writer.newLine();
+	            } catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+	
+	
+	            if(messageId == -1)
+	            {
+	            	running = false;
+	            }
+	        
+	        }
+	        else 
+	        {
+	            //System.out.println("Unexpected message type: "+msg.getClass());
+	        }
+	        
+	    }
+    
 
 
 
@@ -94,10 +197,6 @@ class Producer {
 	        stringData = testData.toString();   // If you wanted to go char by char
 	        bytesData = stringData.getBytes();
 	        	
-
-	        Session session = null;
-	        Connection connection = null;
-	        MessageProducer producer = null;
 			try 
 			{
 				connection = factory.createConnection();
@@ -108,12 +207,15 @@ class Producer {
 				
 				if(createQueue == false)
 				{
-					producer = session.createProducer(queue);
+					producer = session.createProducer(msgQueue);
+					consumer = session.createConsumer(ackQueue);
 				}
 				else
 				{
-					dest = new QueueImpl("queue://msgs");
-					producer = session.createProducer(dest);
+					msgDest = new QueueImpl("queue://msgs");
+					ackDest = new QueueImpl("queue://acks");
+					producer = session.createProducer(msgDest);
+					consumer = session.createConsumer(ackDest);
 				}
 				
 				
@@ -134,18 +236,10 @@ class Producer {
 	        
 	        for( int i=1; i <= numMessages; i ++) 
 	        {
-	           	//System.out.println(String.format("Press enter to send a message"));
-	        	//String s = commandLine.readLine();
    
 				// Put data into the output message
 	            try 
 	            {    
-		            //msg.setStringProperty("ebts", DATA);
-		            //msg.setIntProperty("number", i);
-					//msg.setLongProperty("id", (long)i);
-					//sendTime = System.currentTimeMillis();
-					//msg.setLongProperty("send_time", sendTime);
-					//msg.setStringProperty("data", data);
 	            	msg.writeInt(i);
 	            	msg.writeInt(producerId);
 	            	msg.writeLong(System.currentTimeMillis());
@@ -171,6 +265,9 @@ class Producer {
 	            {
 	            	System.out.println(String.format("Sent %d messages", i));
 	            }
+	            
+	            // Receive ack
+	            receiveAck();
 	            
 	            try {
 					msg.clearBody();
@@ -295,20 +392,8 @@ class Producer {
 					e.printStackTrace();
 				}
 
-                if( msg instanceof  TextMessage ) 
+				if( msg instanceof  BytesMessage ) 
                 {
-                    String body = null;
-					try {
-						body = ((TextMessage) msg).getText();
-					} catch (JMSException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-                    //System.out.println(String.format("Received %d bytes", body.length()));
-                }                
-                else if( msg instanceof  BytesMessage ) 
-                {
-                
                 	messageId = 0;
                 	producerId = 0;
                 	consumerId = 0;
@@ -379,8 +464,8 @@ class Producer {
 
     public static void main(String []args) throws Exception 
     {
-    	AckProcessor ackProcessor = new AckProcessor();
-    	Thread ackThread = null;
+    	//AckProcessor ackProcessor = new AckProcessor();
+    	//Thread ackThread = null;
     	
     	SendProcessor sendProcessor = new SendProcessor();
     	Thread sendThread = null;
@@ -395,7 +480,6 @@ class Producer {
         
   
     	// Read command line args
-    	// broker type, host, port, username, password, send channel name, ack channel name, numMessages, use persistence 
     	if (args.length != 1)
     	{
     	     System.out.println("Usage: Producer propertiesFileName");
@@ -404,8 +488,6 @@ class Producer {
     	else
     	{
     		propertyFileName = args[0];
-	    	//numMessages = Integer.parseInt(args[1]);
-	    	//msgSize = Integer.parseInt(args[2]);
     	}
     	
         Hashtable<String, String> env = new Hashtable<String, String>(); 
@@ -440,19 +522,21 @@ class Producer {
     	
     	// setup producer
     	sendProcessor.setFactory(connectionFactory);
-    	sendProcessor.setDestination(msgQueue);
+    	sendProcessor.setMsgQueue(msgQueue);
+    	sendProcessor.setAckQueue(ackQueue);
     	sendProcessor.setNumMessages(numMessages);
     	sendProcessor.setMsgSize(msgSize);
     	sendProcessor.setProducerId(1);
     	
+    	
     	if(brokerType.equals("APOLLO"))
     	{
-    		ackProcessor.setCreateQueue();
+    		//ackProcessor.setCreateQueue();
     		sendProcessor.setCreateQueue();
     	}
     	
-    	ackProcessor.setFactory(connectionFactory);
-    	ackProcessor.setQueue(ackQueue);
+    	//ackProcessor.setFactory(connectionFactory);
+    	//ackProcessor.setQueue(ackQueue);
         
     	// Create output file
         DateFormat df = new SimpleDateFormat("yyyy-MM-dd_HH.mm.ss");  
@@ -469,13 +553,14 @@ class Producer {
         writer.newLine();
         
         // set output file in ackProcessor
-    	ackProcessor.setOuputFile(writer);
+    	//ackProcessor.setOuputFile(writer);
+        sendProcessor.setOuputFile(writer);
     	
     	// Create processing threads
-    	ackThread = new Thread(ackProcessor);
+    	//ackThread = new Thread(ackProcessor);
     	sendThread = new Thread(sendProcessor);
         
-    	ackThread.start();
+    	//ackThread.start();
     	// TODO - replace with a function that returns when ack thread has started and connected
         Thread.sleep(2000);
         
@@ -486,7 +571,7 @@ class Producer {
 
         // wait for threads to finish
         sendThread.join();
-        ackThread.join();
+        //ackThread.join();
         endTime = System.currentTimeMillis();
         
         System.out.printf("Start time: %d\n", startTime);
