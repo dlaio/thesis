@@ -62,6 +62,7 @@ class Consumer {
     	int producerId = 0;
     	long sentTime = 0;
     	int msgSize = 0;
+    	int messagesRecvd = 0;
     	
     	//org.apache.log4j.BasicConfigurator.configure();
     	logger.trace("Entering application.");
@@ -142,7 +143,7 @@ class Consumer {
         	ackProducer = producerSession.createProducer(ackChannelDest);
         }
         //HORNETQ
-        else if(false)
+        else if(brokerType.equalsIgnoreCase("HORNETQ"))
         {
         	// Create message consumer
         	consumer = consumerSession.createConsumer(msgQueue, "color = red");
@@ -156,11 +157,8 @@ class Consumer {
         	consumer = consumerSession.createConsumer(msgQueue);
         	// Create message ack
         	ackProducer = producerSession.createProducer(ackQueue);
-        	
         }
 
-       
-       
         BytesMessage ack = null;
 		try 
 		{
@@ -178,6 +176,7 @@ class Consumer {
         {
         	//System.out.println("calling receive...");
             Message msg = consumer.receive();
+            messagesRecvd++;
             //System.out.println("returned from receive...");
             if( msg instanceof  BytesMessage ) 
             {
@@ -189,8 +188,9 @@ class Consumer {
             	if(nextExpectedMsgId != messageId)
             	{
             		int numDroppedMessages = messageId - nextExpectedMsgId;
-            		System.out.println(String.format("Dropped %d messages (%d/%d)", numDroppedMessages, nextExpectedMsgId, messageId));
+            		System.out.println(String.format("Dropped %d messages (expected: %d | received: %d)", numDroppedMessages, nextExpectedMsgId, messageId));
             		// TODO - send dropped message NAK
+            		/*
             		for(int nakMsg = 0; nakMsg < numDroppedMessages; nakMsg++)
             		{
             			//sendNakMsg();
@@ -214,6 +214,7 @@ class Consumer {
             			
                         ack.clearBody();
             		}
+            		*/
             	}
             		
                 // send response message
@@ -254,6 +255,7 @@ class Consumer {
             if(messageId == -1)
             {
             	running = false;
+            	System.out.println(String.format("Received %d messages", messagesRecvd));
             }
             
         }
