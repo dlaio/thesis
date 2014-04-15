@@ -1,0 +1,5 @@
+Message ID,Producer ID,Consumer ID,Result,Sent time,Ack Sent Time,Ack Recv Time,
+
+runtime,0.119,sec
+throughput,84033.61,msgs/sec
+bandwidth,11849.289,MB/sec

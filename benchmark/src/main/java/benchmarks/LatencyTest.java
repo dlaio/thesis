@@ -218,7 +218,7 @@ class LatencyTest {
 					consumer = session.createConsumer(ackDest);
 				}
 				
-				
+				producer.setPriority(9);
 				producer.setDeliveryMode(DeliveryMode.NON_PERSISTENT);
 				
 			} catch (JMSException e) {
