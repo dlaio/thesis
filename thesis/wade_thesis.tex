@@ -79,7 +79,7 @@ O'hara used protocols such as HTTP, TCP and FTP as models for the new protocol, 
 
 This work lead to the creation of the OpenAMQ message broker, which as of the writing of this document is no longer being actively developed \cite{OPEN_AMQ}. 
 
-In 2005 JPMorgan Chase partnered with companies such as: Cisco Systems, Red Hat, iMatix and the Transaction Workflow Innovation Standards Team (TWIST) to form an AMQP working group.  At the same time JPMorgan Chase partnered with Red Hat to create Apache Qpid \cite{QPID_HOMEPAGE} and Rabbit Technologies independently implemented RabbitMQ %citation needed
+In 2005 JPMorgan Chase partnered with companies such as: Cisco Systems, Red Hat, iMatix and the Transaction Workflow Innovation Standards Team (TWIST) to form an AMQP working group.  At the same time JPMorgan Chase partnered with Red Hat to create Apache Qpid \cite{QPID_HOMEPAGE} and Rabbit Technologies independently implemented RabbitMQ \cite{RABBITMQ}.
 
 There have been five major releases of the AMQP standard.
 
@@ -90,15 +90,10 @@ There have been five major releases of the AMQP standard.
 %In December 2006 - AMQP version 0-9 was released. - http://www.amqp.org/specification/0-9/amqp-org-download
 %In November 2008 - AMQP version 0-9-1 was released. - http://www.amqp.org/specification/0-9-1/amqp-org-download
 %In February 2008 - AMQP version 0-10 was released.  - http://www.amqp.org/specification/0-10/amqp-org-download
-
 %JPMorgan Chase collaborated with Red Hat to develop the Apache Qpid MOM implementation.  Independently, RabbitMQ was developed by Rabbit Technologies as well as AMQP complient implementations by Microsoft and StormMQ.
-
 %The working group expanded to include 23 companies, including: Bank of America, Barclays, Credit Suisse, Deutsche B$\ddot{o}$rse Systems, Goldman Sachs, Microsoft Corporation, Novell, Red Hat, VMware and others.
-
 %The AMQP standard also defines message orientation, queuing, routing, reliability, and security.   AMQP also describes the wire-level format of the data so that any nodes that are AMQP compliant can handle the message stream.  
-
 %Standardization lead to the rapid development of many MOM systems such as: Apache Qpid, RabbitMQ, StormMQ, ActiveMQ, Apache Apollo, SwiftMQ.  Even Microsoft supports the AMQP1.0 protocol with their implementation of the ServiceBus class in .NET  and is a supported protocol on the Azure cloud computing platform.  
-
 %MOM implementations that support the AMQP version 1.0 specification (Released October 29th 2012) \cite{todo} are interoperable and are available on many platforms.  
 
 AMQP 1.0 was released by the AMQP working group on October 30th 2011.  The next day, on November 1st 2011, the AMQP working group announced its reorganization as a OASIS member section. \cite{AMQP}
@@ -108,6 +103,7 @@ AMQP 1.0 was released by the AMQP working group on October 30th 2011.  The next 
 AMQP is a layered protocol.  The first layer defines a type system and a set of encodings that must be used to represent fundamental types.  The second layer defines an binary, peer-to-peed protocol for transporting messages between two nodes on a network.  Layer three defines the overall AMQP message format, its contents and header/footer structure.  Layer four defines a communication protocol and how to atomically cluster messages.  Layer five deals explicitly with security, which from the ground up is a fundamental part of AMQP \cite{AMQP1.0}. 
 
 \missingfigure[figwidth=6cm]{Diagram of AMQP layers}
+\todo{Use O'Hara's diagram as a guide}
 
 AMQP treats all nodes equally - it places no constraints on roles of connections endpoints.   Because of historical reasons most AMQP messaging systems are broker centric - client nodes connect to a centralized message passing mechanism to exchange messages.  At the most fundamental level a broker is a trusted intermediary, in the AMQP model a broker has three primary responsibilities \cite{UNKNOWN}:
 
@@ -119,17 +115,13 @@ AMQP treats all nodes equally - it places no constraints on roles of connections
 \item Routing and distributing messages 
 \end{enumerate}
 
-
 \missingfigure[figwidth=14cm]{Diagram of Broker network}
 
 \subsection {Specific differences}
 
-AMQP 1.0 is a major departure from earlier AMQP versions.  While it imposes far fewer semantic requirements, the protocol is substantially more complex.   %http://www.rabbitmq.com/protocols.html
+AMQP 1.0 is a major departure from earlier AMQP versions.  While it imposes far fewer semantic requirements, the protocol is substantially more complex \cite{RABBITMQ_PROTOCOLS}.  Pre AMQP 1.0 versions specify both a  wire-level protocol and a broker architecture.  AMQP 1.0 only specifies a protocol and does not impose any architecture model on implementations \cite{REDHAT1}.
 
-Pre AMQP 1.0 versions specify both a  wire-level protocol and a broker architecture.  AMQP 1.0 only specifies a protocol and does not impose any architecture model on implementations \cite{REDHAT1}.
-
-AMQP 1.0 is a symmetric protocol, all nodes are treated equally.  Earlier versions are asymmetric, each connection must have a defined client and broker.  This allows for broker-less point-to-point connections to be made using AMQP 1.0, where as every connection in Pre AMQP 1.0 versions were required to have at least one broker between clients.  AMQP versions before 1.0 also specified protocol commands to manage brokers.  AMQP 0-10 specifies commands such as "Create Queue", "Delete Queue", etc.  AMQP 1.0 does not define these messages as part of the protocol and assumes that this functionality will be part of each specific implementation.  %https://access.redhat.com/site/documentation/en-US/Red_Hat_Enterprise_MRG/2/html/Messaging_Programming_Reference/Differences_between_AMQP_0-10_and_AMQP_1.0.html
-
+AMQP 1.0 is a symmetric protocol, all nodes are treated equally.  Earlier versions are asymmetric, each connection must have a defined client and broker.  This allows for broker-less point-to-point connections to be made using AMQP 1.0, where as every connection in Pre AMQP 1.0 versions were required to have at least one broker between clients.  AMQP versions before 1.0 also specified protocol commands to manage brokers.  AMQP 0-10 specifies commands such as "Create Queue", "Delete Queue", etc.  AMQP 1.0 does not define these messages as part of the protocol and assumes that this functionality will be part of each specific implementation.  \cite{REDHAT1} 
 Previous AMQP versions had strict definitions for clients and brokers.  Every connection must have a defined client and server (broker).  The AMQP 1.0 standard is much more flexible, it permits point-to-point connections where no central broker or broker network is part of the data transfer.  
 
 \subsection{backwards capability}
@@ -144,10 +136,10 @@ The release of AMQP 1.0 is not without controversy.  The 1.0 was a major departu
 The AMQP specification is not unique in its goal of providing a cross-platform, ubiquitous message protocol.  There are several popular specifications in current use.  Many MOM implementations that support the AMQP protocol also support these other protocols; some are built in natively while others need to be enabled as plugins.   
 
 \subsection{STOMP}
-Simple Text Oriented Message Protocol (STOMP) is a text-based protocol designed to work with message oriented middleware systems.  It defines a wire-level message encoding format that allows for STOMP clients to communicate with any STOMP enabled message broker.  It is built on top of TCP/IP and uses a protocol similar to HTTP.  %http://stomp.github.io/
+Simple Text Oriented Message Protocol (STOMP) is a text-based protocol designed to work with message oriented middleware systems.  It defines a wire-level message encoding format that allows for STOMP clients to communicate with any STOMP enabled message broker.  It is built on top of TCP/IP and uses a protocol similar to HTTP \cite{STOMP}.
 
 \subsection{OpenWire}
-OpenWire is a binary protocol used as the native wire format of ActiveMQ.  %http://en.wikipedia.org/wiki/OpenWire_%28binary_protocol%29
+OpenWire is a binary protocol used as the native wire format of ActiveMQ \cite{OPENWIRE}.
 
 \subsection{Extensible Messaging and Presence Protocol (XMPP)}
 XMPP is a communications protocol based on XML.  Originally developed by the open-source community for instant messaging, presence information and contact list maintenance \cite{XMPP}  
@@ -169,34 +161,23 @@ There are several major open source AMQP broker implementations.
 
 
 \subsection{RabbitMQ}
-RabbitMQ is an open source message broker written in the Erlang programming language \cite{RABBITMQ} RabbitMQ is developed by and supported by Rabbit Technologies Ltd.  It is actively being developed, the latest stable version (3.2.4) was released on March 4, 2014.  It is licensed under the Mozilla Public License \cite{rabbitmq-wikipedia}.
+RabbitMQ is an open source message broker written in the Erlang programming language \cite{RABBITMQ} RabbitMQ is developed by and supported by Rabbit Technologies Ltd.  It is actively being developed, the latest stable version (3.2.4) was released on March 4, 2014.  It is licensed under the Mozilla Public License \cite{rabbitmq-wikipedia}.  The development history/management of RabbitMQ is complicated.  Originally developed by Lshift, the project was moved to an independent company Rabbit Technologies Ltd, which was cofounded by Monadic and CohesiveFT.  In 2013, Rabbit Technologies Ltd. was acquired by SpringSource, a division of VMware, Inc. \cite{LSHIFT}.  As of March 2014 - commercial support for RabbitMQ was being provided by Pivotal, Ltd \cite{PIVOTAL}.  RabbitMQ is cross platform and has bindings/clients for a wide range of systems/programming languages \cite{RABBITMQ_CLIENTS}.  
 
-The development history/management of RabbitMQ is complicated.  Originally developed by Lshift, the project was moved to an independent company Rabbit Technologies Ltd, which was cofounded by Monadic and CohesiveFT.  In 2013, Rabbit Technologies Ltd. was acquired by SpringSource, a division of VMware, Inc. \todo{http://www.lshift.net/blog/2010/04/13/rabbitmq-2}.  As of March 2014 - commercial support for RabbitMQ was being provided by Pivotal, Ltd \todo{http://www.gopivotal.com/support} \todo{work out relationship with VMware}.
-
-RabbitMQ is cross platform and has bindings/clients for a wide range of systems/programming languages.  \todo{http://www.rabbitmq.com/devtools.html}.  has bindings/client for many different languages.  RabbitMQ has comprehensive documentation, and supports Clustering, High Availability, SSL, Management, etc. \todo{complete}
+%has bindings/client for many different languages.  RabbitMQ has comprehensive documentation, and supports Clustering, High Availability, SSL, Management, etc. \todo{complete}
 
 \subsection{ActiveMQ}
-ActiveMQ is an open source message broker written in Java.  ActiveMQ is developed by the Apache Software Foundation and as of \todo{date} the most recent stable version is 5.9.0 released on October 21, 2013.
-
-ActiveMQ is part of Apache's enterprise service bus (ESB) implementations, and is leveraged in other project such as Apache Camel and Apache CXF to Service Orientated Architecture (SOA) projects.
-
-Version 5.3 of Apache ActiveMQ has published performance results using the SPECjms2007 benchmark. \todo{citation needed} 
-
-%\todo{ http://en.wikipedia.org/wiki/ActiveMQ}
+ActiveMQ is an open source message broker written in Java.  ActiveMQ is developed by the Apache Software Foundation and as of the writing of this report the most recent stable version is 5.9.0 released on October 21, 2013.  ActiveMQ is part of Apache's enterprise service bus (ESB) implementations, and is leveraged in other project such as Apache Camel and Apache CXF to Service Orientated Architecture (SOA) projects. Version 5.3 of Apache ActiveMQ has published performance results using the SPECjms2007 benchmark \cite{ACTIVEMQ_WIKI}. 
 
 \subsection{ApolloMQ}
-ApolloMQ is an open source message broker written in Java.  It is a fork of Apache ActiveMQ with the primary difference being the threading model and message dispatching architecture \todo{https://activemq.apache.org/apollo/}.  ApolloMQ maintains multi-protocol support and supports STOMP, AMQP 1.0, MQTT, OpenWire, SSL and WebSockets.
+ApolloMQ is an open source message broker written in Java.  It is a fork of Apache ActiveMQ with the primary difference being the threading model and message dispatching architecture.  ApolloMQ maintains multi-protocol support and supports STOMP, AMQP 1.0, MQTT, OpenWire, SSL and WebSockets \cite{APOLLO}.
 
 \subsection{HornetQ}
-HornetQ is an open source, multi-protocol messaging system developed from JBoss, a division of Red Hat, Inc. \cite{REDHAT}.  It can be integrated with JBoss Application Server or embedded into standalone applications.  As of version \todo{find version} it supports the AMQP1.0 specification.  HornetQ is released under the Apache Software License version 2.0 \todo{citation needed}.  There are a few components that are released under LGPL \todo{citation needed} but the plan is to develop a pure ASL2.0 version in the future.  HornetQ is written in Java and supports and platform with a Java 5 or later runtime.   It is actively being developed and maintained with the last stable version 2.4.0 being released on December 16, 2013. \cite{HORNETQ}.  As of 4/10/2014 HornetQ holds the SPECjms2007 benchmark record \todo{citation needed}.  
-%\todo{http://en.wikipedia.org/wiki/HornetQ}
-
+HornetQ is an open source, multi-protocol messaging system developed from JBoss, a division of Red Hat, Inc. \cite{REDHAT}.  It can be integrated with JBoss Application Server or embedded into standalone applications.  As of version \todo{find version} it supports the AMQP1.0 specification.  HornetQ is released under the Apache Software License version 2.0 \todo{citation needed}.  There are a few components that are released under LGPL \todo{citation needed} but the plan is to develop a pure ASL2.0 version in the future.  HornetQ is written in Java and supports and platform with a Java 5 or later runtime.   It is actively being developed and maintained with the last stable version 2.4.0 being released on December 16, 2013. \cite{HORNETQ}.  As of 4/10/2014 HornetQ holds the SPECjms2007 benchmark record \cite{HORNETQ_WIKI}.
 
 \subsection{Client implementations}
 There are many different AMQP client libraries for connecting a software components to an AMQP broker.  There are ports for most programming languages, for example RabbitMQ lists 175 different client libraries for over 21 different programming languages \cite{RABBITMQ_CLIENTS}
 
-The maturity and functionally for each client vary greatly.  Granted, many of the client libraries are open source and have low activity, but there are several open source client libraries with active support.  There are also closed source, proprietary implementations and while they may be free to use there are license restrictions that make them unusable for this project \footnote{Specificially SwiftMQ has a clause in their license that prohibits publishing benchmarking results without company approval} One of the most active and widely used client libraries is Apache's Qpid Proton library \cite{QPID_PROTON}. 
-Which has both C and Java implementations.  \todo{more}
+The maturity and functionally for each client vary greatly.  Granted, many of the client libraries are open source and have low activity, but there are several open source client libraries with active support.  There are also closed source, proprietary implementations and while they may be free to use there are license restrictions that make them unusable for this project \footnote{Specificially SwiftMQ has a clause in their license that prohibits publishing benchmarking results without company approval} One of the most active and widely used client libraries is Apache's Qpid Proton library \cite{QPID_PROTON}, which has both C and Java implementations.  
 
 \begin{figure}\centering\vspace{2.0in} 
 \includegraphics[scale=.5]{client_comparision}  \caption{Summary of available AMQP clients}\label{Figure 1}  \end{figure}
@@ -347,6 +328,8 @@ It was a similar experience with HornetQ, which claims to have native AMQP 1.0 s
 
 \bibitem{RABBITMQ_CLIENTS} http://www.rabbitmq.com/devtools.html
 
+\bibitem{RABBITMQ_PROTOCOLS} http://www.rabbitmq.com/protocols.html
+
 \bibitem{SPEC_JMS2007} http://www.spec.org/osg/jms2007/
 
 \bibitem{OSU_MICRO_BENCHMARKS} http://mvapich.cse.ohio-state.edu/benchmarks
@@ -360,6 +343,23 @@ It was a similar experience with HornetQ, which claims to have native AMQP 1.0 s
 \bibitem{REDHAT} http://en.wikipedia.org/wiki/JBoss_(company)
 
 \bibitem{XMPP} http://en.wikipedia.org/wiki/XMPP
+
+\bibitem{STOMP} http://stomp.github.io/
+
+\bibitem{HORNETQ_WIKI} http://en.wikipedia.org/wiki/HornetQ
+
+\bibitem{ACTIVEMQ_WIKI} http://en.wikipedia.org/wiki/ActiveMQ
+
+\bibitem{OPENWIRE} http://en.wikipedia.org/wiki/OpenWire_binary_protocol
+
+\bibitem{LSHIFT} http://www.lshift.net/blog/2010/04/13/rabbitmq-2
+
+\bibitem{PIVOTAL} http://www.gopivotal.com/support 
+
+\bibitem{APOLLO} https://activemq.apache.org/apollo
+
+
+
 
 \todo{Not sure if I really want to advertise this. How on Earth am I going to actually support this}
 NOTE: Printed copies of all sources are available upon request. 
