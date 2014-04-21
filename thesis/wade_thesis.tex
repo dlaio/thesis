@@ -42,16 +42,10 @@
   tabsize=3
 }
 
+%   Please refer to Figure~\ref{Figure 1}.  % Note \label command below
+
 \newcommand{\comment}[1]
 {\par {\bfseries \color{blue} #1 \par}} %comment showed
-
-% Use the first command below if you want captions over 1 line indented.
-% A side effect of this is to remove the use of bold for captions. 
-% To restore bold, also include the second line below.
-%\usepackage[hang]{caption}     % to indent subsequent lines of captions
-%\renewcommand{\captionfont}{\bfseries} % only needed with caption package;
-                                        %   otherwise bold is default)
-
 
 %%%%%%%%%%%%%%%%%%%%  supply titlepage info  %%%%%%%%%%%%%%%%%%%%%
 \thesistitle{\bf Federating AMQP1.0 Message-oriented Middleware (MOM) brokers}        
@@ -80,8 +74,13 @@ Message passing is a fundamental aspect of systems engineering.  Without a metho
 
 
 \chapter{INTRODUCTION}
-
 \todo{Have a section here to describe the goal of the project?}
+
+\begin{figure}[h]
+\centering
+\includegraphics[scale=.40]{table_of_amqp_message_brokers}  
+\caption{Table of AMQP versions }
+\end{figure}
 
 \chapter{BACKGROUND}
 
@@ -191,7 +190,6 @@ The Java EE JMS (Java Messaging Service) was the starting point for attempting t
 \section{AMQP implementations}
 
 \subsection{Broker implementations}
-
 There are several major open source AMQP broker implementations.  
 
 \begin{figure}[h]
@@ -200,21 +198,19 @@ There are several major open source AMQP broker implementations.
 \caption{Google trend data for AMQP implementations}
 \end{figure}
 
+RabbitMQ has recently overtaken ActiveMQ as the most popular choice.
 
 \subsection{RabbitMQ}
 RabbitMQ is an open source message broker written in the Erlang programming language \cite{RABBITMQ} RabbitMQ is developed by and supported by Rabbit Technologies Ltd.  It is actively being developed, the latest stable version (3.2.4) was released on March 4, 2014.  It is licensed under the Mozilla Public License \cite{rabbitmq-wikipedia}.  The development history/management of RabbitMQ is complicated.  Originally developed by Lshift, the project was moved to an independent company Rabbit Technologies Ltd, which was cofounded by Monadic and CohesiveFT.  In 2013, Rabbit Technologies Ltd. was acquired by SpringSource, a division of VMware, Inc. \cite{LSHIFT}.  As of March 2014 - commercial support for RabbitMQ was being provided by Pivotal, Ltd \cite{PIVOTAL}.  RabbitMQ is cross platform and has bindings/clients for a wide range of systems/programming languages \cite{RABBITMQ_CLIENTS}.  
 
 \subsection{ActiveMQ}
-ActiveMQ is an open source message broker written in Java.  ActiveMQ is developed by the Apache Software Foundation and as of the writing of this report the most recent stable version is 5.9.0 released on October 21, 2013.  ActiveMQ is part of Apache's enterprise service bus (ESB) implementations, and is leveraged in other project such as Apache Camel and Apache CXF to Service Orientated Architecture (SOA) projects. %Version 5.3 of Apache ActiveMQ has published performance results using the SPECjms2007 benchmark \cite{ACTIVEMQ_WIKI}. 
+ActiveMQ is an open source message broker written in Java.  ActiveMQ is developed by the Apache Software Foundation and as of the writing of this report the most recent stable version is 5.9.0 released on October 21, 2013.  ActiveMQ is part of Apache's enterprise service bus (ESB) implementations, and is leveraged in other project such as Apache Camel and Apache CXF to Service Orientated Architecture (SOA) projects. 
 
 \subsection{ApolloMQ}
 ApolloMQ is an open source message broker written in Java.  It is a fork of Apache ActiveMQ with the primary difference being the threading model and message dispatching architecture.  ApolloMQ maintains multi-protocol support and supports STOMP, AMQP 1.0, MQTT, OpenWire, SSL and WebSockets \cite{APOLLO}.
 
 \subsection{HornetQ}
 HornetQ is an open source, multi-protocol messaging system developed from JBoss, a division of Red Hat, Inc. \cite{REDHAT}.  It can be integrated with JBoss Application Server or embedded into standalone applications.  As of version 2.2 it supports the AMQP1.0 specification \cite{HORNETQ_ROADMAP}.  HornetQ is released under the Apache Software License version 2.0.  There are a few components that are released under LGPL but the plan is to develop a pure ASL2.0 version in the future .  HornetQ is written in Java and supports and platform with a Java 5 or later runtime.   It is actively being developed and maintained with the last stable version 2.4.0 being released on December 16, 2013. \cite{HORNETQ}.  
-
-%https://community.jboss.org/wiki/HornetQGeneralFAQs
-%As of 4/10/2014 HornetQ holds the SPECjms2007 benchmark record \cite{HORNETQ_WIKI}.
 
 \subsection{Client implementations}
 There are many different AMQP client libraries for connecting a software components to an AMQP broker.  There are ports for most programming languages, for example RabbitMQ lists 175 different client libraries for over 21 different programming languages \cite{RABBITMQ_CLIENTS}.  The maturity and functionally for each client vary greatly.  Many of the client libraries are open source and have low activity, but there are several open source client libraries with active support.  There are also closed source, proprietary implementations and while they may be free to use there are license restrictions that make them unusable for this project. \footnote{Specificially SwiftMQ has a clause in their license that prohibits publishing benchmarking results without company approval} One of the most active and widely used client libraries is Apache's Qpid Proton library \cite{QPID_PROTON}, which has both C and Java implementations.  
@@ -230,7 +226,7 @@ This project is decomposed into three separate phases.  For the first phase, bas
 
 \begin{figure}[h]
 \centering
-\includegraphics{direct_connect}  
+\includegraphics[scale=.75]{direct_connect}  
 \caption{Simple AMQP broker network}
 \end{figure}
 
@@ -242,104 +238,196 @@ The third phase is to create heterogeneous broker networks using the same broker
 
 Each step will be completed independently using the same lab setup, computing hardware and software.  As much as possible outside factors will be minimized to help ensure that the collected data is comparable.  AMQP brokers are complicated software components, with many interacting parts so care must be taken to ensure that the data collected is reliable.  
 
+\section{Hardware setup}
+A lab environment was setup to isolate the tests and minimize outside interference.  The test hardware was over-specified to ensure that the benchmark hardware was not a limiting factor in the experiment.  A High-end workstation was used to host the AMQP message broker networks.  Business class laptop computers were used to run the benchmarking software.  All components were connected with as business class network switch.  The computers will use the latest Long-Term Support version of the Ubuntu Server operating system (12.04LTS) and will be configured to minimize background daemons and processes.  The times of all systems will be synchronized using a local NTP server.  A full list of the components used for this project is included in Figure \ref{hardware_components} and \ref{network_components}.
 
+\begin{figure}[h]
+\centering
+\includegraphics{test_setup_2}  
+\caption{Hardware setup}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\label{hardware_components}
+\includegraphics[scale=.40]{hardware_components}  
+\caption{Hardware components}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\label{network_components}
+\includegraphics[scale=.40]{network_hardware}  
+\caption{Network components}
+\end{figure}
+
+\subsection{Network design}
+The design of the test network was kept as simple as possible.  The goal was to ensure that the network overhead was not the limiting factor in the benchmarks measurement.
+
+\begin{figure}[h]
+\centering
+\includegraphics{test_setup}  
+\caption{Network overview}
+\end{figure}
+
+\section{Benchmark design}
+The design of the benchmarks for this experiment we modeled after the work done by Subramoni, Marsh, Narravula, Lai and Panda in \cite{Subramoni} which in turn based their benchmarks on Ohio State University Micro-benchmarks \cite{OSU_MICRO_BENCHMARKS}.  There are two fundamental components to the benchmark application, an AMQP message producer and AMQP message consumer.  A high level overview of the software components can be seen in Figure~\ref{Benchmark Design}.  
+
+\begin{figure}[h]
+\centering
+\includegraphics[scale=.75]{bandwidth_latency_throughput}  
+\caption{Relation between bandwidth, latency and througput}
+\end{figure}
+
+\subsection{Message Format}
+AMQP supports a wide variety of message formats.  For this experiment the \"BytesMessage\" format was used exclusively, this uses the binary encoding format as specified in AMQP1.0.     
+
+\subsection{Message Consumer}
+The message consumer is the simpler component, its job is to receive AMQP messages and send a response message back to the original message producer that contains a timestamp of when the source message was received.  The source code for the message consumer module can be found in Appendix \ref{consumer-code}.
+
+\subsection{Message Producer}
+The message producer is a multithreaded component responsible for sending example AMQP messages and recording message acknowledgments.  The functionality of sending messages was separated from the message acknowledgment management to minimize the impact of writing to disk on the benchmark's accuracy.  
+
+The source code for the latency-benchmark message producer can be found in Appendix \ref{latency-producer-code}.
+
+The source code for the bandwidth-benchmark message producer can be found in Appendix \ref{bandwidth-producer-code}.
+
+\begin{figure}[h]
+\centering
+\label{Benchmark Design}
+\includegraphics{benchmark_design}  
+\caption{benchmark design}
+\end{figure}
+
+\subsection{Format of collected data}
+For simple analysis, data will be written from the benchmark application into comma-separated-value (CSV) files.  
+
+\chapter{Results}
+From the beginning of the project creating a simple AMQP producer and consumer proved to be more difficult than expected.  Even though all of the AMQP broker implementations chosen to benchmark claim to support AMQP 1.0 each of them required more work than anticipated to get data flowing.  Specific sections needed to be implemented in the benchmark software to get the benchmarks to work with the different AMQP broker implementations.  Configuration sections were required for both the message producer and consumer, refer to the source code in \ref{custom-configuration} for and example of the custom configurations needed
+
+\section{Single Broker Benchmark Results}
+This is some text for this section.
 
 \begin{lstlisting}
-// Hello.java
-import javax.swing.JApplet;
-import java.awt.Graphics;
-
-public class Hello extends JApplet {
-    public void paintComponent(Graphics g) {
-        g.drawString("Hello, world!", 65, 95);
-    }    
+//APOLLO
+if(brokerType.equalsIgnoreCase("APOLLO"))
+{
+   ackChannelDest = new QueueImpl("queue://acks");
+   msgChannelDest = new QueueImpl("queue://msgs");
+        	
+   consumer = consumerSession.createConsumer(msgChannelDest, null);
+   ackProducer = producerSession.createProducer(ackChannelDest);
+}
+//HORNETQ
+else if(brokerType.equalsIgnoreCase("HORNETQ"))
+{
+   // Create message consumer
+   consumer = consumerSession.createConsumer(msgQueue, "color = red");
+   // Create message ack
+   ackProducer = producerSession.createProducer(ackQueue);
+}
+else
+{
+   // Create message consumer
+   consumer = consumerSession.createConsumer(msgQueue);
+   // Create message ack
+   ackProducer = producerSession.createProducer(ackQueue);
 }
 \end{lstlisting}
 
-\todo{Section describing Networking benchmark background}
+This goes against the very idea of having a common API to access the messaging services.  Part of this was from the different use cases that each broker implementation addresses.  Apache Qpid (cpp) and Apache Qpid (Java) are both designed to be setup and statically configured.  In order to get these brokers working it was necessary to use an external configuration utility (command-line based for Qpid(cpp), web-based for Qpid(Java)) to setup the broker exchanges and queues.  ActiveMQ and Apollo were much more flexible for dynamic exchange creation.  
 
-\section{Hardware setup}
-A lab environment will be setup to isolate the tests from outside message traffic.  High-end workstation, class laptop computers and business class network equipment will be used.  The computers will use the latest Long-Term Support version of the Ubuntu Server operating system (12.04LTS) and will be configured to minimize background daemons and processes.  The times of all systems will be synchronized using a local NTP server. A complete listing of software versions used will be published with the results of this research.
+From the original list of AMQP broker implementations, only four resulted in successful data collections.  The brokers that failed did so for a variety of reasons.  RabbitMQ was a nonstarter.  While they claim to have an AMQP 1.0 plugin to enable the protocol on their broker implementation, no amount of configuration of either the broker or the client resulted in a working message passing instance.  Investigation into the issue revealed that in spite of adding and enabling the AMQP 1.0 plugin to RabbitMQ the broker was identifying the underlying transport as 0-9-1.  Frustratingly, although the Qpid JMS Client library also claimed to be configurable to support AMQP 0-9-1 no amount of client side configuration or modification of the benchmark software resulted in a viable message passing system.  StormMQ is totally cloud based - they do not let you instantiate a broker instance locally and was therefore untestable.  SwiftMQ was better, and while using their broker did result in a working configuration, their license specifically disallows the release of benchmarking information.  The real surprise was HornetQ, which while it supports AMQP1.0 natively never worked.  Several configurations were tried, both building from source and using pre-built binaries.  Their built in clients seemed to work which are run as part of their build process, but no matter the options that were added to the benchmark software, it was never able to create a valid AMQP channel.
 
-\subsection{Network design}
+For the implementations that remain the results of benchmarking can be see in \ref{throughput} and \ref{bandwidth}.
 
+\section{Homogenious Broker Network Benchmark Results}
+\subsection{ActiveMQ-ActiveMQ}
+\subsection{QPID-QPID}
 
-\section{Benchmark design}
+\section{Hetergenious Broker Network Benchmark Results}
+Unfortunately, because ActiveMQ did not support federation using the AMQP protocol, the ultimate goal of measuring the performance of heterogeneous broker networks was not possible.
 
-The design of the benchmarks for this experiment we modeled after the work done by Subramoni, Marsh, Narravula, Lai and Panda in \cite{Subramoni} which in turn based their benchmarks on Ohio State University Micro-benchmarks \cite{OSU_MICRO_BENCHMARKS}.
+\begin{figure}[tb] 
+\centering
+ \makebox[\textwidth]{\includegraphics[width=.9\paperwidth, angle=90]{throughput.png}}
+\caption{Throughput}
+\label{throughput}
+\end{figure}
+
+\begin{figure}[tb] 
+\centering
+ \makebox[\textwidth]{\includegraphics[width=.9\paperwidth, angle=90]{bandwidth.png}}
+\caption{Bandwidth}
+\label{bandwidth}
+\end{figure}
+
+\begin{figure}[tb] 
+\centering
+ \makebox[\textwidth]{\includegraphics[width=.9\paperwidth, angle=90]{activemq_activemq_bandwidth.png}}
+\caption{ActiveMQ-ActiveMQ bandwidth}
+\label{activemq-activemq-bandwidth}
+\end{figure}
+
+\begin{figure}[tb] 
+\centering
+ \makebox[\textwidth]{\includegraphics[width=.9\paperwidth, angle=90]{activemq_activemq_throughput.png}}
+\caption{ActiveMQ-ActiveMQ throughput}
+\label{activemq-activemq-througput}
+\end{figure}
+
+\begin{figure}[tb] 
+\centering
+ \makebox[\textwidth]{\includegraphics[width=.9\paperwidth, angle=90]{activemq_activemq_time.png}}
+\caption{ActiveMQ-ActiveMQ total time}
+\label{activemq-activemq-total-time}
+\end{figure}
+
+\begin{figure}[tb] 
+\centering
+ \makebox[\textwidth]{\includegraphics[width=.9\paperwidth, angle=90]{activemq_activemq_latency.png}}
+\caption{ActiveMQ-ActiveMQ latency}
+\label{activemq-activemq-latency}
+\end{figure}
+
+\begin{figure}[h] 
+\centering
+\includegraphics{qpid_qpid_bandwidth.png}
+\caption{Qpid(CPP)-Qpid(CPP) bandwidth}
+\label{qpid-qpid-bandwidth}
+\end{figure}
+
+\begin{figure}[tb] 
+\centering
+ \makebox[\textwidth]{\includegraphics[width=.9\paperwidth, angle=90]{qpid_qpid_throughput.png}}
+\caption{Qpid(CPP)-Qpid(CPP) throughput}
+\label{qpid-qpid-throughput}
+\end{figure}
+
+\begin{figure}[tb] 
+\centering
+ \makebox[\textwidth]{\includegraphics[width=.9\paperwidth, angle=90]{qpid_qpid_total_time.png}}
+\caption{Qpid(CPP)-Qpid(CPP) total time}
+\label{qpid-qpid-total-time}
+\end{figure}
+
+\begin{figure}[tb] 
+\centering
+ \makebox[\textwidth]{\includegraphics[width=.9\paperwidth, angle=90]{qpid_qpid_latency.png}}
+\caption{Qpid(CPP)-Qpid(CPP) latency}
+\label{qpid-qpid-latency}
+\end{figure}
+
+\chapter{Future Work}
 
 %\subsection{Existing Benchmarks}
 %There are other existing and published benchmarks for MOM systems.  The most widely known is SPECjms2007 \cite{SPEC_JMS2007}.  It was the first industry standard benchmark for evaluating the Java Messaging Service (JMS).
 %SPECjms2007 is designed to model a messaging system of a grocery store - it simulates all of the messages needed to maintain inventory/purchasing/etc.  It does this to provide a comprehensive - real-world evaluation of a messaging system.  The benchmark was expanded by \todo{find name and reference} to originally benchmark the Apache Qpid MOM system \cite{citation needed}.  The benchmark needs to be licensed from the SPEC organization.  
+%https://community.jboss.org/wiki/HornetQGeneralFAQs
+%As of 4/10/2014 HornetQ holds the SPECjms2007 benchmark record \cite{HORNETQ_WIKI}.
+%Version 5.3 of Apache ActiveMQ has published performance results using the SPECjms2007 benchmark \cite{ACTIVEMQ_WIKI}. 
 
 
-
-\subsection{Format of test data}
-
-
-%Each step is setup to collect meaningful data about the performance of each AMQP broker implemenation
-
- %developed broker network architectures and benchmarked to support large federated broker networks and benchmarked the messaging passing performance.  They experimented with multi-level broker architectures and multi-consumer fanout patterns to find the optimal broker design patterns.  All of their work was performed with Apache Qpid implementation [3].  
-
-%Subramoni, Marsh, Narravula, Lai and Panda in [1] designed and developed benchmarks for MOM broker networks building using the Message Passing Interface (MPI) benchmarks developed by Ohio State University Network-Based Computing Laboratory’s [1] and the Standard Performance Evaluation Corporation (SPEC) MOM benchmarks  [1].  Benchmarks such as the Direct Exchange - Single Publisher Single Consumer (DE-SPSC) and Direct Exchange - Multiple Publishers Multiple Consumers (DE-MPMC) benchmarks [1] will be implemented for each AMQP implementation 
-
-%This project will combine the methodologies used in these experiments and add an additional variable, different broker implementations to determine what the performance impact of a heterogenous broker network on messaging performance.
-
-%In addition to these benchmarks, additional information will be collected in order to compare the performance of the broker implementations.
-
-
-\begin{figure}
-\centering
-\includegraphics{bandwidth_latency_throughput}  
-\caption{Relation between bandwidth, latency and througput}
-\end{figure}
-
-
-Because these implementations were designed around the message traffic of the financial services sector they excel at passing small messages and focus on message throughput.  There are performance differences between each implementation and generic benchmarks for each implementation are available \cite{todo}\cite{todo}.
-
-\begin{figure}
-\centering
-\includegraphics{test_setup}  
-\caption{Test setup overview}
-\end{figure}
-
-
-
-\subsection{Direct Exchange - Single Publisher Single Consumer (DE-SPSC)}
-\subsection{Direct Exchange - Multiple Publishers Multiple Consumers (DE-MPMC)}
-\subsection{Single Publisher - Multiple Consumer (SPMC)}
-
-
-
-\begin{figure}
-\centering
-\includegraphics{complicated_fanout}  
-\caption{Complex - Single Publisher - Multiple Consumer (Complex)(SPMC-C)}
-\end{figure}
-
-\subsection{Topic Exchange - Single Publisher Single Consumer (SPSC)}
-
-
-\chapter{Experimental Results}
-
-From the beginning of the project creating a simple AMQP producer and consumer proved to be more difficult than expected.  Even though all of the AMQP broker implementations chosen to benchmark claim to support AMQP 1.0 each of them required more work than anticipated to get data flowing.  
-
-Apache ActiveMQ worked out of the box.  
-Apache Apollo needed additional client library calls before clients could exchange data.
-Apache Qpid 
-RabbitMQ was a nonstarter.  While they claim to have an AMQP 1.0 plugin to enable the protocol on their broker implementation, no amount of configuration of either the broker or the client resulted in a working message passing instance.  Investigation into the issue revealed that in spite of adding and enabling the AMQP 1.0 plugin to RabbitMQ the broker was identifying the underlying transport as 0-9-1.  Frustratingly, although the Qpid JMS Client library also claimed to be configurable to support AMQP 0-9-1 no amount of client side configuration or modification of the benchmark software resulted in a viable message passing system.
-It was a similar experience with HornetQ, which claims to have native AMQP 1.0 support. 
-
-%\subsection{Experimental Setup}
-%And so on, for more chapters.
-%Another citation for the bibliography:\cite{anotherbook}
-%
-%  This is a sentence to take up space and look like text.
-%   This is a sentence to take up space and look like text.
-%   Please refer to Figure~\ref{Figure 1}.  % Note \label command below
-
-% The following produces a numbered bibliography where the numbers
-% correspond to the \cite commands in the text.
 \specialhead{LITERATURE CITED}
 \begin{singlespace}
 \begin{thebibliography}{99}
@@ -428,12 +516,6 @@ It was a similar experience with HornetQ, which claims to have native AMQP 1.0 s
 
 \bibitem{HORNETQ_ROADMAP} https://community.jboss.org/wiki/Roadmap
 
-
-
-
-\todo{Not sure if I really want to advertise this. How on Earth am I going to actually support this}
-NOTE: Printed copies of all sources are available upon request. 
-
 \end{thebibliography}
 \end{singlespace}
 
@@ -442,6 +524,7 @@ NOTE: Printed copies of all sources are available upon request.
 \appendix    % This command is used only once!
 \addtocontents{toc}{\parindent0pt\vskip12pt APPENDICES} %toc entry, no page #
 \chapter{CONSUMER SOURCE CODE}
+\label{consumer-code}
 \begin{lstlisting}
 package benchmarks;
 
@@ -570,7 +653,6 @@ try
    ack = producerSession.createBytesMessage();
 } catch (JMSException e) 
 {
-   // TODO Auto-generated catch block
    e.printStackTrace();
 }
         
@@ -642,6 +724,7 @@ while(running == true)
 \end{lstlisting}
 
 \chapter{LATENCY BENCHMARK SOURCE CODE}
+\label{latency-producer-code}
 \begin{lstlisting}
 package benchmarks;
 
@@ -1045,6 +1128,7 @@ public static void main(String []args) throws Exception
 \end{lstlisting}
 
 \chapter{BANDWIDTH BENCHMARK SOURCE CODE}
+\label{bandwidth-producer-code}
 \begin{lstlisting}
 package benchmarks;
 
@@ -1543,6 +1627,79 @@ public static void main(String []args) throws Exception
 
 }
 
+\end{lstlisting}
+
+\chapter{CONSUMER CONFIGURATION}
+\begin{lstlisting}
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+java.naming.factory.initial = org.apache.qpid.amqp_1_0.jms.jndi.PropertiesFileInitialContextFactory
+
+# register some connection factories
+# connectionfactory.[jndiname] = [ConnectionURL]
+connectionfactory.brokerURI = amqp://admin:admin@10.9.1.30:10001/
+
+
+# Register an AMQP destination in JNDI
+# destination.[jniName] = [Address Format]
+queue.MSGS = msgs
+queue.ACKS = acks
+
+clientId = 1
+brokerType =  QPID
+\end{lstlisting}
+
+\chapter{PRODUCER CONFIGURATION}
+\begin{lstlisting}
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+java.naming.factory.initial = org.apache.qpid.amqp_1_0.jms.jndi.PropertiesFileInitialContextFactory
+
+# register some connection factories
+# connectionfactory.[jndiname] = [ConnectionURL]
+connectionfactory.brokerURI = amqp://admin:admin@10.9.1.30:10001/
+
+# Register an AMQP destination in JNDI
+# destination.[jniName] = [Address Format]
+queue.MSGS = msgs
+queue.ACKS = acks
+
+producerId = 1
+numMessages = 3000
+msgSize = 50000
+brokerType = QPID-QPID
 \end{lstlisting}
 
 \end{document}
