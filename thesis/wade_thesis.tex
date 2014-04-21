@@ -18,6 +18,30 @@
 
 \usepackage[draft]{todonotes}
 
+\usepackage{listings}
+\usepackage{color}
+
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+
+\lstset{frame=tb,
+  language=Java,
+  aboveskip=3mm,
+  belowskip=3mm,
+  showstringspaces=false,
+  columns=flexible,
+  basicstyle={\small\ttfamily},
+  numbers=none,
+  numberstyle=\tiny\color{gray},
+  keywordstyle=\color{blue},
+  commentstyle=\color{dkgreen},
+  stringstyle=\color{mauve},
+  breaklines=true,
+  breakatwhitespace=true
+  tabsize=3
+}
+
 \newcommand{\comment}[1]
 {\par {\bfseries \color{blue} #1 \par}} %comment showed
 
@@ -49,12 +73,17 @@
 \listoffigures         	 % required if there are figures
 
 \specialhead{ACKNOWLEDGMENT}
-Special thanks to: my wife Anne, my son Jack, my daughter Erin, and my parents Brian and Catherine.  Thanks for letting me have the time to put this together!  
+Special thanks to: my wife Anne, my son Jack, my daughter Erin, and my parents Brian and Catherine.  Thanks for all the support.  
 
 \specialhead{ABSTRACT}
-Message passing is a fundamental aspect of systems engineering.  Without a methodology to pass information between separate components building a distributed system is impossible.  When building a distributed system it is very common for teams/organizations to develop proprietary message passing systems.  Because of their isolated development, these systems usually fill a very niche role and do not interoperate with other implementations. \footnote{Many middleware implementations that fail because of this - The author has specifically implemented two such systems in his professional career.  Both were replaced with other systems unused because of lack of interoperability.} This is a fundamental problem when trying to build larger systems from subsystems.  Without a common language and transport getting different components to communicate is difficult if not impossible.  There have been many attempts to develop a common languages and transports with varying amounts of success.  A new standard, developed by a consortium of large technology companies, the Advanced Message Queuing Protocol (AMQP) provides an open standard protocol for message orientated middleware (MOM).  There are currently several active AMQP compliant MOM implementations, both open-source and proprietary.  This project investigates the current state of several popular open-source AMQP message brokers, attempts to create a federated network of different implementations in order to collect benchmark information for both homogenous an heterogeneous broker networks.  To achieve this goal a simple AMQP messaging benchmark was developed and data collected from different broker architectures.  While it was possible to integrate some of the active broker implementations this project found that not all of the available implementations are interoperable and there are significant problems creating a reliable messaging system with all implementations.  
+Message passing is a fundamental aspect of systems engineering.  Without a methodology to pass information between separate components building a distributed system is impossible.  When building a distributed system it is very common for teams/organizations to develop proprietary message passing systems.  Because of their isolated development, these systems usually fill a very niche role and do not interoperate with other implementations. \footnote{Many middleware implementations that fail because of this - The author has specifically implemented two such systems in his professional career.  Both were replaced with other systems unused because of lack of interoperability.} This is a fundamental problem when trying to build larger systems from subsystems.  Without a common language and transport getting different components to communicate is difficult if not impossible.  There have been many attempts to develop common languages and transports with varying amounts of success.  A new standard, developed by a consortium of large technology companies, the Advanced Message Queuing Protocol (AMQP) provides an open standard protocol for message orientated middleware (MOM).  There are currently several active AMQP compliant MOM implementations, both open-source and proprietary.  This project investigates the current state of several popular open-source AMQP message brokers, attempts to create a federated network of different implementations in order to collect benchmark information for both homogenous an heterogeneous broker networks.  To achieve this goal a simple AMQP messaging benchmark was developed and data collected from different broker architectures.  While it was possible to integrate some of the active broker implementations this project found that not all of the available implementations are interoperable and there are significant problems creating a reliable messaging system with the available AMQP implementations.  
+
 
 \chapter{INTRODUCTION}
+
+\todo{Have a section here to describe the goal of the project?}
+
+\chapter{BACKGROUND}
 
 \section{Middleware}
 In computer science, the term \"middleware\" has many meanings.  Generically, middleware can be thought as \"glue\"  for computer software.  It facilitates communication between different software components - abstracting the complexities of intra and inter process communication from a software component.  In a broad sense many things that do clearly resemble a communication context are technically middleware.  User space software drivers, virtual machines (Java not VMware) and kernel Inter-process Communication (IPC) mechanisms are all forms of middleware.  This paper focuses on middleware as it relates to distributed applications - typically used to share data and state between software components.  Middleware at this level typically facilitates communication over a network and allows for components to work together in separate execution environments.  Even with this narrow definition there are many different classes of middleware systems.  Some of the common design patterns used are: enterprise application integration (EAI), data integration (DI), message-oriented middleware (MOM), object request brokers (ORB) and the enterprise service bus (ESB).  This paper specifically focuses on message-oriented middleware. 
@@ -62,7 +91,7 @@ In computer science, the term \"middleware\" has many meanings.  Generically, mi
 \subsection{Message Oriented Middleware (MOM)}
 Message-oriented middleware (MOM) is a middleware design that is focused on sending discrete blocks of information (messages) between processing components.  Messages can contain state information, commands or pure input data - it is up to the processing components to identify and process the messages according to their contents.  MOM systems are inherently asynchronous - processing components typically execute independently and are not synchronized to process in lockstep.
 
-A fundamental component of MOM systems is a message broker.  A message broker is acts as an intermediary - all messages sent through a MOM system must be sent to a message broker.  A message broker performs many of the same functions as a network router on an ethernet network, but at a much higher level.  Message brokers can connect to either message producers, consumers or other message brokers - and are responsible for routing messages from the producer to consumer.  Frequently, message brokers are designed to do more than just route messages and are designed with the ability to store messages locally in order to provide message reliability.  Message brokers are often able to handle message duplication - that is to forward a message to multiple clients and provide for quality of service (QOS) to be applied to messages.  
+A fundamental component of MOM systems is a message broker.  A message broker is acts as an intermediary - all messages sent through a MOM system must be sent to a message broker.  A message broker performs many of the same functions as a network router on an ethernet network, but at application layer \cite{WIKI_OSI}.  Message brokers can connect to either message producers, consumers or other message brokers - and are responsible for routing messages from the producer to consumer.  Frequently, message brokers are designed to do more than just route messages and are designed with the ability to store messages locally in order to provide message reliability.  Message brokers are often able to handle message duplication - that is to forward a message to multiple clients and provide for quality of service (QOS) to be applied to messages.  
 
 While a message broker can provide many benefits, by adding an additional component between message producers and consumers this can reduce performance and reliability.  MOM systems also frequently require a significant amount of configuration to setup properly and add an extra layer of complexity when trying to debug a system.
  
@@ -73,19 +102,21 @@ While a message broker can provide many benefits, by adding an additional compon
 The Advanced Message Queueing Protocol (AMQP) is a standard published by the Organization for the Advancement of Structured Information Standards (OASIS) \cite{OASIS}.  In the Open Systems Interconnection (OSI) model AMQP is a application layer protocol, it exists in the same space as other protocols as the File Transfer Protocol (FTP), Dynamic Host Control Protocol (DHCP), etc.  \cite{WIKI_OSI}.  The AMQP specifies both message format and and a communication language.  This is in direct contract to previous attempts to standardize middleware at the API level, e.g. Java Messaging Service (JMS) \cite{ORACLE_JMS}.
 
 \section{AMQP History}
-The development of AMQP was started in 2003 by John O'Hara and others at JPMorgan Chase in London, UK.  JPMorgan was looking for a messaging solution with high durability that supported a very high number of small message transactions (in the range of 500,000 messages/second) \cite{Kramer}.  In the financial sector accurate and reliable message passing is clearly very important.  Losing a message or delays in message processing have clear economic consequences.  At the time O'Hara found that the commercial middleware products could not deliver the level of service required,  and banks were known to develop their own enterprise middleware to fill in the gaps. However, developing enterprise middleware is complex and difficult, and bank middleware would come and go \cite{Kramer}.
+The development of AMQP was started in 2003 by John O'Hara and others at JPMorgan Chase in London, UK \cite{O'Hara}.  JPMorgan was looking for a messaging solution with high durability that supported a very high number of small message transactions (in the range of 500,000 messages/second) \cite{Kramer}.  In the financial sector accurate and reliable message passing is clearly very important.  Losing a message or delays in message processing have clear economic consequences.  At the time O'Hara found that the commercial middleware products could not deliver the level of service required,  and banks were known to develop their own enterprise middleware to fill in the gaps. However, developing enterprise middleware is complex and difficult, and bank middleware would come and go \cite{Kramer}.
 
 O'hara used protocols such as HTTP, TCP and FTP as models for the new protocol, and wanted to ensure that the specification for the protocol was open and royalty-free \cite{O'Hara}.  Initial development was done internally at JPMorgan Chase but was later subcontracted with iMatix Corporation for a broker and protocol documentation \cite{Apps, Cameron}.
 
 This work lead to the creation of the OpenAMQ message broker, which as of the writing of this document is no longer being actively developed \cite{OPEN_AMQ}. 
 
-In 2005 JPMorgan Chase partnered with companies such as: Cisco Systems, Red Hat, iMatix and the Transaction Workflow Innovation Standards Team (TWIST) to form an AMQP working group.  At the same time JPMorgan Chase partnered with Red Hat to create Apache Qpid \cite{QPID_HOMEPAGE} and Rabbit Technologies independently implemented RabbitMQ \cite{RABBITMQ}.
+In 2005 JPMorgan Chase partnered with companies such as: Cisco Systems, Red Hat, iMatix and the Transaction Workflow Innovation Standards Team (TWIST) to form an AMQP working group.  There have been five major releases of the AMQP standard \cite{AMQP_SPECS}.
 
-There have been five major releases of the AMQP standard.
+\begin{figure}[h]
+\centering
+\includegraphics[scale=.5]{amqp_versions}  
+\caption{Table of AMQP versions }
+\end{figure}
 
-\begin{figure}\centering\vspace{2.0in} 
-\includegraphics[scale=.5]{amqp_versions}  \caption{Table of AMQP versions }\label{Figure 1}  \end{figure}
-
+%At the same time JPMorgan Chase partnered with Red Hat to create Apache Qpid \cite{QPID_HOMEPAGE} and Rabbit Technologies independently implemented RabbitMQ \cite{RABBITMQ}.
 %In June 2006 - AMQP version 0-8 was released. - http://www.amqp.org/specification/0-8/amqp-org-download
 %In December 2006 - AMQP version 0-9 was released. - http://www.amqp.org/specification/0-9/amqp-org-download
 %In November 2008 - AMQP version 0-9-1 was released. - http://www.amqp.org/specification/0-9-1/amqp-org-download
@@ -102,12 +133,14 @@ AMQP 1.0 was released by the AMQP working group on October 30th 2011.  The next 
 
 AMQP is a layered protocol.  The first layer defines a type system and a set of encodings that must be used to represent fundamental types.  The second layer defines an binary, peer-to-peed protocol for transporting messages between two nodes on a network.  Layer three defines the overall AMQP message format, its contents and header/footer structure.  Layer four defines a communication protocol and how to atomically cluster messages.  Layer five deals explicitly with security, which from the ground up is a fundamental part of AMQP \cite{AMQP1.0}. 
 
-\missingfigure[figwidth=6cm]{Diagram of AMQP layers}
-\todo{Use O'Hara's diagram as a guide}
+\begin{figure}[h]
+\centering
+\includegraphics[scale=.75]{ohara1.jpg}  
+\caption{AMQP layers}
+\end{figure}
+\todo{Replace figure with own version}
 
-AMQP treats all nodes equally - it places no constraints on roles of connections endpoints.   Because of historical reasons most AMQP messaging systems are broker centric - client nodes connect to a centralized message passing mechanism to exchange messages.  At the most fundamental level a broker is a trusted intermediary, in the AMQP model a broker has three primary responsibilities \cite{UNKNOWN}:
-
-%todo - work on citation information for this one...
+AMQP treats all nodes equally - it places no constraints on roles of connections endpoints.   Because of historical reasons most AMQP messaging systems are broker centric - client nodes connect to a centralized message passing mechanism to exchange messages.  At the most fundamental level a broker is a trusted intermediary, in the AMQP model a broker has three primary responsibilities \cite{O'Hara}:
 
 \begin{enumerate}
 \item Taking responsibility for messages sent by clients.
@@ -115,18 +148,23 @@ AMQP treats all nodes equally - it places no constraints on roles of connections
 \item Routing and distributing messages 
 \end{enumerate}
 
-\missingfigure[figwidth=14cm]{Diagram of Broker network}
+Message brokers all for the creation of messaging networks with varying complexity.  Brokers typically support both direct connections (single producer communicates with single consumer) and fanout configurations (single producer communicates with many consumers).  With these building blocks it is also possible to create very complicated broker networks with many tiers of producers, consumers and brokers. 
+
+\begin{figure}[h]
+\centering
+\includegraphics[scale=.75]{simple_fanout}  
+\caption{Simple broker network}
+\end{figure}
 
 \subsection {Specific differences}
 
 AMQP 1.0 is a major departure from earlier AMQP versions.  While it imposes far fewer semantic requirements, the protocol is substantially more complex \cite{RABBITMQ_PROTOCOLS}.  Pre AMQP 1.0 versions specify both a  wire-level protocol and a broker architecture.  AMQP 1.0 only specifies a protocol and does not impose any architecture model on implementations \cite{REDHAT1}.
 
-AMQP 1.0 is a symmetric protocol, all nodes are treated equally.  Earlier versions are asymmetric, each connection must have a defined client and broker.  This allows for broker-less point-to-point connections to be made using AMQP 1.0, where as every connection in Pre AMQP 1.0 versions were required to have at least one broker between clients.  AMQP versions before 1.0 also specified protocol commands to manage brokers.  AMQP 0-10 specifies commands such as "Create Queue", "Delete Queue", etc.  AMQP 1.0 does not define these messages as part of the protocol and assumes that this functionality will be part of each specific implementation.  \cite{REDHAT1} 
-Previous AMQP versions had strict definitions for clients and brokers.  Every connection must have a defined client and server (broker).  The AMQP 1.0 standard is much more flexible, it permits point-to-point connections where no central broker or broker network is part of the data transfer.  
+AMQP 1.0 is a symmetric protocol, all nodes are treated equally.  Earlier versions are asymmetric, each connection must have a defined client and broker.  This allows for broker-less point-to-point connections to be made using AMQP 1.0, where as every connection in Pre AMQP 1.0 versions were required to have at least one broker between clients.  AMQP versions before 1.0 also specified protocol commands to manage brokers.  AMQP 0-10 specifies commands such as "Create Queue", "Delete Queue", etc.  AMQP 1.0 does not define these messages as part of the protocol and assumes that this functionality will be part of each specific implementation \cite{REDHAT1}.  Previous AMQP versions had strict definitions for clients and brokers.  Every connection must have a defined client and server (broker).  The AMQP 1.0 standard is much more flexible, it permits point-to-point connections where no central broker or broker network is part of the data transfer.  
 
 \subsection{backwards capability}
 
-AMQP 1.0 is not backwards compatible with earlier AMQP versions.  
+AMQP 1.0 is not backwards compatible with earlier AMQP versions.  \todo{citation needed}
 
 \subsection{Backlash to AMQP 1.0}
 
@@ -156,43 +194,69 @@ The Java EE JMS (Java Messaging Service) was the starting point for attempting t
 
 There are several major open source AMQP broker implementations.  
 
-\begin{figure}\centering\vspace{2.0in} 
-\includegraphics[scale=.5]{broker_popularity}  \caption{Google trend data for AMQP implementations}\label{Figure 1}  \end{figure}
+\begin{figure}[h]
+\centering
+\includegraphics[scale=.5]{broker_popularity}  
+\caption{Google trend data for AMQP implementations}
+\end{figure}
 
 
 \subsection{RabbitMQ}
 RabbitMQ is an open source message broker written in the Erlang programming language \cite{RABBITMQ} RabbitMQ is developed by and supported by Rabbit Technologies Ltd.  It is actively being developed, the latest stable version (3.2.4) was released on March 4, 2014.  It is licensed under the Mozilla Public License \cite{rabbitmq-wikipedia}.  The development history/management of RabbitMQ is complicated.  Originally developed by Lshift, the project was moved to an independent company Rabbit Technologies Ltd, which was cofounded by Monadic and CohesiveFT.  In 2013, Rabbit Technologies Ltd. was acquired by SpringSource, a division of VMware, Inc. \cite{LSHIFT}.  As of March 2014 - commercial support for RabbitMQ was being provided by Pivotal, Ltd \cite{PIVOTAL}.  RabbitMQ is cross platform and has bindings/clients for a wide range of systems/programming languages \cite{RABBITMQ_CLIENTS}.  
 
-%has bindings/client for many different languages.  RabbitMQ has comprehensive documentation, and supports Clustering, High Availability, SSL, Management, etc. \todo{complete}
-
 \subsection{ActiveMQ}
-ActiveMQ is an open source message broker written in Java.  ActiveMQ is developed by the Apache Software Foundation and as of the writing of this report the most recent stable version is 5.9.0 released on October 21, 2013.  ActiveMQ is part of Apache's enterprise service bus (ESB) implementations, and is leveraged in other project such as Apache Camel and Apache CXF to Service Orientated Architecture (SOA) projects. Version 5.3 of Apache ActiveMQ has published performance results using the SPECjms2007 benchmark \cite{ACTIVEMQ_WIKI}. 
+ActiveMQ is an open source message broker written in Java.  ActiveMQ is developed by the Apache Software Foundation and as of the writing of this report the most recent stable version is 5.9.0 released on October 21, 2013.  ActiveMQ is part of Apache's enterprise service bus (ESB) implementations, and is leveraged in other project such as Apache Camel and Apache CXF to Service Orientated Architecture (SOA) projects. %Version 5.3 of Apache ActiveMQ has published performance results using the SPECjms2007 benchmark \cite{ACTIVEMQ_WIKI}. 
 
 \subsection{ApolloMQ}
 ApolloMQ is an open source message broker written in Java.  It is a fork of Apache ActiveMQ with the primary difference being the threading model and message dispatching architecture.  ApolloMQ maintains multi-protocol support and supports STOMP, AMQP 1.0, MQTT, OpenWire, SSL and WebSockets \cite{APOLLO}.
 
 \subsection{HornetQ}
-HornetQ is an open source, multi-protocol messaging system developed from JBoss, a division of Red Hat, Inc. \cite{REDHAT}.  It can be integrated with JBoss Application Server or embedded into standalone applications.  As of version \todo{find version} it supports the AMQP1.0 specification.  HornetQ is released under the Apache Software License version 2.0 \todo{citation needed}.  There are a few components that are released under LGPL \todo{citation needed} but the plan is to develop a pure ASL2.0 version in the future.  HornetQ is written in Java and supports and platform with a Java 5 or later runtime.   It is actively being developed and maintained with the last stable version 2.4.0 being released on December 16, 2013. \cite{HORNETQ}.  As of 4/10/2014 HornetQ holds the SPECjms2007 benchmark record \cite{HORNETQ_WIKI}.
+HornetQ is an open source, multi-protocol messaging system developed from JBoss, a division of Red Hat, Inc. \cite{REDHAT}.  It can be integrated with JBoss Application Server or embedded into standalone applications.  As of version 2.2 it supports the AMQP1.0 specification \cite{HORNETQ_ROADMAP}.  HornetQ is released under the Apache Software License version 2.0.  There are a few components that are released under LGPL but the plan is to develop a pure ASL2.0 version in the future .  HornetQ is written in Java and supports and platform with a Java 5 or later runtime.   It is actively being developed and maintained with the last stable version 2.4.0 being released on December 16, 2013. \cite{HORNETQ}.  
+
+%https://community.jboss.org/wiki/HornetQGeneralFAQs
+%As of 4/10/2014 HornetQ holds the SPECjms2007 benchmark record \cite{HORNETQ_WIKI}.
 
 \subsection{Client implementations}
-There are many different AMQP client libraries for connecting a software components to an AMQP broker.  There are ports for most programming languages, for example RabbitMQ lists 175 different client libraries for over 21 different programming languages \cite{RABBITMQ_CLIENTS}
+There are many different AMQP client libraries for connecting a software components to an AMQP broker.  There are ports for most programming languages, for example RabbitMQ lists 175 different client libraries for over 21 different programming languages \cite{RABBITMQ_CLIENTS}.  The maturity and functionally for each client vary greatly.  Many of the client libraries are open source and have low activity, but there are several open source client libraries with active support.  There are also closed source, proprietary implementations and while they may be free to use there are license restrictions that make them unusable for this project. \footnote{Specificially SwiftMQ has a clause in their license that prohibits publishing benchmarking results without company approval} One of the most active and widely used client libraries is Apache's Qpid Proton library \cite{QPID_PROTON}, which has both C and Java implementations.  
 
-The maturity and functionally for each client vary greatly.  Granted, many of the client libraries are open source and have low activity, but there are several open source client libraries with active support.  There are also closed source, proprietary implementations and while they may be free to use there are license restrictions that make them unusable for this project \footnote{Specificially SwiftMQ has a clause in their license that prohibits publishing benchmarking results without company approval} One of the most active and widely used client libraries is Apache's Qpid Proton library \cite{QPID_PROTON}, which has both C and Java implementations.  
-
-\begin{figure}\centering\vspace{2.0in} 
-\includegraphics[scale=.5]{client_comparision}  \caption{Summary of available AMQP clients}\label{Figure 1}  \end{figure}
+\begin{figure}[h]
+\centering
+\includegraphics[scale=.5]{client_comparision}  
+\caption{Summary of available AMQP clients}
+\end{figure}
 
 \chapter{Methodology}
-There are three independent steps for generating the testing data for this project.  Each step will be completed independently using the same lab setup, computing hardware and software.  As much as possible outside factors will be minimized to help ensure that the collected data is comparable.  AMQP brokers are complicated software components, with many interacting parts so care must be taken to ensure that the data collected is reliable.  
+This project is decomposed into three separate phases.  For the first phase, baseline performance data will be collected on the performance of each AMQP broker implementation in isolation.  A very simple broker network configuration will be used, with a single broker, consumer and producer.
 
-For the first step baseline performance data will be collected on the performance of each AMQP broker implementation in isolation.  There have been many experiments run with this configuration \cite{BENCHMARK1} \cite{BENCHMARK2}.  While this step is not novel it will allow us to compare results with independent AMQP evaluations to ensure that the developed benchmark produces reliable results. 
+\begin{figure}[h]
+\centering
+\includegraphics{direct_connect}  
+\caption{Simple AMQP broker network}
+\end{figure}
 
-The second step for this project is to create simple broker networks of homogenous AMQP broker implementations and collect benchmark information.  The broker network configurations will follow the designs described by  Marsh, Sampat, Potluri, Panda in \cite{Scaling AMQP} so that this data may again be compared to an independent evaluation to ensure that the collected results are valid.
+There have been many experiments run with this configuration \cite{BENCHMARK1} \cite{BENCHMARK2}.  While this step is not novel it will allow us to compare results with independent AMQP evaluations to ensure that the developed benchmark produces reliable results. 
 
-The third and final step is to create heterogeneous broker networks using the same broker network architecture in step two.  This will allow for direct comparison of the impact of integrating different AMQP broker networks into a single system.  This will model one of the goals of the AMQP working group and will provide meaningful, real world data on the interoperability and performance of the AMQP broker implementations. 
+The second phase for this project is to create simple broker networks of homogenous AMQP broker implementations and collect benchmark information.  The broker network configurations will follow the designs described by Marsh, Sampat, Potluri, Panda in \cite{Scaling AMQP} so that this data may again be compared to an independent evaluation to ensure that the collected results are valid.
+
+The third phase is to create heterogeneous broker networks using the same broker network architecture in step two.  This will allow for direct comparison of the impact of integrating different AMQP broker networks into a single system.  This will model one of the goals of the AMQP working group and will provide meaningful, real world data on the interoperability and performance of the AMQP broker implementations. 
+
+Each step will be completed independently using the same lab setup, computing hardware and software.  As much as possible outside factors will be minimized to help ensure that the collected data is comparable.  AMQP brokers are complicated software components, with many interacting parts so care must be taken to ensure that the data collected is reliable.  
+
+
+
+\begin{lstlisting}
+// Hello.java
+import javax.swing.JApplet;
+import java.awt.Graphics;
+
+public class Hello extends JApplet {
+    public void paintComponent(Graphics g) {
+        g.drawString("Hello, world!", 65, 95);
+    }    
+}
+\end{lstlisting}
 
 \todo{Section describing Networking benchmark background}
-
 
 \section{Hardware setup}
 A lab environment will be setup to isolate the tests from outside message traffic.  High-end workstation, class laptop computers and business class network equipment will be used.  The computers will use the latest Long-Term Support version of the Ubuntu Server operating system (12.04LTS) and will be configured to minimize background daemons and processes.  The times of all systems will be synchronized using a local NTP server. A complete listing of software versions used will be published with the results of this research.
@@ -204,10 +268,10 @@ A lab environment will be setup to isolate the tests from outside message traffi
 
 The design of the benchmarks for this experiment we modeled after the work done by Subramoni, Marsh, Narravula, Lai and Panda in \cite{Subramoni} which in turn based their benchmarks on Ohio State University Micro-benchmarks \cite{OSU_MICRO_BENCHMARKS}.
 
-\subsection{Existing Benchmarks}
-There are other existing and published benchmarks for MOM systems.  The most widely known is SPECjms2007 \cite{SPEC_JMS2007}.  It was the first industry standard benchmark for evaluating the Java Messaging Service (JMS).
+%\subsection{Existing Benchmarks}
+%There are other existing and published benchmarks for MOM systems.  The most widely known is SPECjms2007 \cite{SPEC_JMS2007}.  It was the first industry standard benchmark for evaluating the Java Messaging Service (JMS).
+%SPECjms2007 is designed to model a messaging system of a grocery store - it simulates all of the messages needed to maintain inventory/purchasing/etc.  It does this to provide a comprehensive - real-world evaluation of a messaging system.  The benchmark was expanded by \todo{find name and reference} to originally benchmark the Apache Qpid MOM system \cite{citation needed}.  The benchmark needs to be licensed from the SPEC organization.  
 
-SPECjms2007 is designed to model a messaging system of a grocery store - it simulates all of the messages needed to maintain inventory/purchasing/etc.  It does this to provide a comprehensive - real-world evaluation of a messaging system.  The benchmark was expanded by \todo{find name and reference} to originally benchmark the Apache Qpid MOM system \cite{citation needed}.  The benchmark needs to be licensed from the SPEC organization.  
 
 
 \subsection{Format of test data}
@@ -224,31 +288,34 @@ SPECjms2007 is designed to model a messaging system of a grocery store - it simu
 %In addition to these benchmarks, additional information will be collected in order to compare the performance of the broker implementations.
 
 
-\begin{figure}\centering\vspace{2.0in} 
-\includegraphics{bandwidth_latency_throughput}  \caption{Relation between bandwidth, latency and througput}\label{Figure 1}  \end{figure}
+\begin{figure}
+\centering
+\includegraphics{bandwidth_latency_throughput}  
+\caption{Relation between bandwidth, latency and througput}
+\end{figure}
 
 
 Because these implementations were designed around the message traffic of the financial services sector they excel at passing small messages and focus on message throughput.  There are performance differences between each implementation and generic benchmarks for each implementation are available \cite{todo}\cite{todo}.
 
-\begin{figure}\centering\vspace{2.0in} 
-\includegraphics{test_setup}  \caption{Test setup overview}\label{Figure 1}  \end{figure}
+\begin{figure}
+\centering
+\includegraphics{test_setup}  
+\caption{Test setup overview}
+\end{figure}
 
 
 
 \subsection{Direct Exchange - Single Publisher Single Consumer (DE-SPSC)}
-
-\begin{figure}\centering\vspace{2.0in} 
-\includegraphics{direct_connect}  \caption{Direct Exchange - Single Publisher Single Consumer (DE-SPSC)}\label{Figure 2}  \end{figure}
-
 \subsection{Direct Exchange - Multiple Publishers Multiple Consumers (DE-MPMC)}
-
 \subsection{Single Publisher - Multiple Consumer (SPMC)}
 
-\begin{figure}\centering\vspace{2.0in} 
-\includegraphics{simple_fanout}  \caption{Single Publisher - Multiple Consumer (SPMC-S)}\label{Figure 3}  \end{figure}
 
-\begin{figure}\centering\vspace{2.0in} 
-\includegraphics{complicated_fanout}  \caption{Complex - Single Publisher - Multiple Consumer (Complex)(SPMC-C)}\label{Figure 4}  \end{figure}
+
+\begin{figure}
+\centering
+\includegraphics{complicated_fanout}  
+\caption{Complex - Single Publisher - Multiple Consumer (Complex)(SPMC-C)}
+\end{figure}
 
 \subsection{Topic Exchange - Single Publisher Single Consumer (SPSC)}
 
@@ -267,10 +334,9 @@ It was a similar experience with HornetQ, which claims to have native AMQP 1.0 s
 %And so on, for more chapters.
 %Another citation for the bibliography:\cite{anotherbook}
 %
-%  This is a sentence to take up space and look like text.%   This is a sentence to take up space and look like text.%   Please refer to Figure~\ref{Figure 1}.  % Note \label command below
-
-%\begin{table}%\caption{This is the Caption for Table 2}%\label{mytable}%\begin{center}%\begin{tabular}{lll}%Here's	& another 	& example \\
-%of		& something	& useful \\%\verb+table+ & environment & command. \end{tabular}%\end{center}%\end{table}
+%  This is a sentence to take up space and look like text.
+%   This is a sentence to take up space and look like text.
+%   Please refer to Figure~\ref{Figure 1}.  % Note \label command below
 
 % The following produces a numbered bibliography where the numbers
 % correspond to the \cite commands in the text.
@@ -292,7 +358,7 @@ It was a similar experience with HornetQ, which claims to have native AMQP 1.0 s
 
 \bibitem{OASIS} "OASIS Homepage", https://www.oasis-open.org/org
 
-\bibitem{WIKI_OSI} http://en.wikipedia.org/wiki/OSI_model
+\bibitem{WIKI_OSI} "http://en.wikipedia.org/wiki/OSI\_model"
 
 \bibitem{ORACLE_JMS} http://docs.oracle.com/javaee/6/tutorial/doc/bncdq.html
 
@@ -306,7 +372,7 @@ It was a similar experience with HornetQ, which claims to have native AMQP 1.0 s
 
 \bibitem{QPID_HOMEPAGE} http://qpid.apache.org/
 
-\bibitem{Apps, Cameron} J. Apps, B. Cameron, "AMQP and RabbitMQ - Message Queueing as an Integration Mechanism", http://www.openvms.org/skonetski/Webinar_2012_09_AMQP_RabbitMQ_Message_Queuing_as_Integration_Mechanism.pdf
+\bibitem{Apps, Cameron} J. Apps, B. Cameron, "AMQP and RabbitMQ - Message Queueing as an Integration Mechanism", http://www.openvms.org/skonetski/Webinar\_2012\_09\_AMQP\_RabbitMQ\_Message\_Queuing\_as\_Integration\_Mechanism.pdf
 
 \bibitem{AMQP} http://www.amqp.org/node/54
 
@@ -320,9 +386,9 @@ It was a similar experience with HornetQ, which claims to have native AMQP 1.0 s
 
 \bibitem{BENCHMARK2} , http://predic8.com/activemq-hornetq-rabbitmq-apollo-qpid-comparison.htm
 
-\bibitem{REDHAT1} https://access.redhat.com/site/documentation/en-US/Red_Hat_Enterprise_MRG/2/html/Messaging_Programming_Reference/Differences_between_AMQP_0-10_and_AMQP_1.0.html
+\bibitem{REDHAT1} https://access.redhat.com/site/documentation/en-US/Red\_Hat\_Enterprise\_MRG/2/html/Messaging\_Programming\_Reference/Differences\_between\_AMQP\_0-10\_and\_AMQP\_1.0.html
 
-\bibitem{MQTT} http://en.wikipedia.org/wiki/MQ_Telemetry_Transport
+\bibitem{MQTT} http://en.wikipedia.org/wiki/MQ\_Telemetry\_Transport
 
 \bibitem{RABBITMQ} http://www.rabbitmq.com
 
@@ -340,7 +406,7 @@ It was a similar experience with HornetQ, which claims to have native AMQP 1.0 s
 
 \bibitem{HORNETQ} http://www.jboss.org/hornetq
 
-\bibitem{REDHAT} http://en.wikipedia.org/wiki/JBoss_(company)
+\bibitem{REDHAT} http://en.wikipedia.org/wiki/JBoss\_(company)
 
 \bibitem{XMPP} http://en.wikipedia.org/wiki/XMPP
 
@@ -350,13 +416,17 @@ It was a similar experience with HornetQ, which claims to have native AMQP 1.0 s
 
 \bibitem{ACTIVEMQ_WIKI} http://en.wikipedia.org/wiki/ActiveMQ
 
-\bibitem{OPENWIRE} http://en.wikipedia.org/wiki/OpenWire_binary_protocol
+\bibitem{OPENWIRE} http://en.wikipedia.org/wiki/OpenWire\_binary\_protocol
 
 \bibitem{LSHIFT} http://www.lshift.net/blog/2010/04/13/rabbitmq-2
 
 \bibitem{PIVOTAL} http://www.gopivotal.com/support 
 
 \bibitem{APOLLO} https://activemq.apache.org/apollo
+
+\bibitem{AMQP_SPECS} http://www.amqp.org/specification
+
+\bibitem{HORNETQ_ROADMAP} https://community.jboss.org/wiki/Roadmap
 
 
 
@@ -371,16 +441,1108 @@ NOTE: Printed copies of all sources are available upon request.
 %%%%%%%%%%%%%%%%%%%%%%%  For Appendices  %%%%%%%%%%%%%%%%%%%
 \appendix    % This command is used only once!
 \addtocontents{toc}{\parindent0pt\vskip12pt APPENDICES} %toc entry, no page #
-\chapter{THIS IS AN APPENDIX}
-Note the numbering of the chapter heading is changed.
-This is a sentence to take up space and look like text.
-\section{A Section Heading}
-This is how equations are numbered in an appendix:
-\begin{equation}
-x^2 + y^2 = z^2
-\end{equation} 
+\chapter{CONSUMER SOURCE CODE}
+\begin{lstlisting}
+package benchmarks;
 
-\chapter{THIS IS ANOTHER APPENDIX}
-This is a sentence to take up space and look like text.
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.Enumeration;
+import java.util.Hashtable;
+import java.util.Properties;
+
+import org.apache.qpid.amqp_1_0.jms.impl.*;
+
+import javax.jms.*;
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
+
+import org.apache.log4j.BasicConfigurator;
+import org.apache.log4j.Logger;
+
+class Consumer
+{
+static final Logger logger = Logger.getLogger(Consumer.class.getName());
+
+public static void main(String []args) throws JMSException, NamingException 
+{
+boolean running = true;
+int clientId = 0;
+int nextExpectedMsgId = 1;
+int messageId = 0;
+int producerId = 0;
+long sentTime = 0;
+int msgSize = 0;
+int messagesRecvd = 0;
+    	
+logger.trace("Entering application.");
+   	
+Destination msgChannelDest = null;
+Destination ackChannelDest = null;
+Connection connection;
+Session consumerSession;
+Session producerSession;
+String contextFileName = null;        
+MessageConsumer consumer;
+MessageProducer ackProducer;
+String brokerType = null;
+InitialContext context = null;
+Hashtable<String, String> env = new Hashtable<String, String>(); 
+env.put(Context.INITIAL_CONTEXT_FACTORY, "org.apache.qpid.amqp_1_0.jms.jndi.PropertiesFileInitialContextFactory"); 
+       
+// Read command line args
+if(args.length == 1)
+{
+   contextFileName = args[0];
+}
+else
+{
+   System.out.println("Usage: Consumer contextFileName");
+   System.exit(-1);
+}
+    	
+logger.debug("context file name is: " + contextFileName);
+env.put(Context.PROVIDER_URL, contextFileName); 
+		  
+try 
+{
+   context = new InitialContext(env);
+} catch (NamingException e1)
+{
+   e1.printStackTrace();
+} 
+		
+Properties properties = new Properties();
+try 
+{
+   properties.load(new FileInputStream(contextFileName));
+} catch (IOException e) 
+{
+   e.printStackTrace();
+}
+          
+// Lookup ConnectionFactory and Queue from the context factory
+ConnectionFactory connectionFactory = (ConnectionFactory) context.lookup("brokerURI");
+connection = connectionFactory.createConnection();
+Queue msgQueue = (Queue) context.lookup("MSGS");
+Queue ackQueue = (Queue) context.lookup("ACKS");
+				
+clientId = Integer.parseInt(properties.getProperty("clientId"));
+brokerType = properties.getProperty("brokerType");
+
+logger.debug("clientId is: " + clientId);
+		
+//session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+producerSession = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+consumerSession = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+
+connection.start();
+    	
+//APOLLO
+if(brokerType.equalsIgnoreCase("APOLLO"))
+{
+   ackChannelDest = new QueueImpl("queue://acks");
+   msgChannelDest = new QueueImpl("queue://msgs");
+        	
+   consumer = consumerSession.createConsumer(msgChannelDest, null);
+   ackProducer = producerSession.createProducer(ackChannelDest);
+}
+//HORNETQ
+else if(brokerType.equalsIgnoreCase("HORNETQ"))
+{
+   // Create message consumer
+   consumer = consumerSession.createConsumer(msgQueue, "color = red");
+   // Create message ack
+   ackProducer = producerSession.createProducer(ackQueue);
+}
+else
+{
+   // Create message consumer
+   consumer = consumerSession.createConsumer(msgQueue);
+   // Create message ack
+   ackProducer = producerSession.createProducer(ackQueue);
+}
+
+BytesMessage ack = null;
+try 
+{
+   ack = producerSession.createBytesMessage();
+} catch (JMSException e) 
+{
+   // TODO Auto-generated catch block
+   e.printStackTrace();
+}
+        
+long start = System.currentTimeMillis();
+nextExpectedMsgId = 1;
+System.out.println("Waiting for messages...");
+while(running == true) 
+{
+   //System.out.println("calling receive...");
+   Message msg = consumer.receive();
+   messagesRecvd++;
+   //System.out.println("returned from receive...");
+   if( msg instanceof  BytesMessage ) 
+   {
+      msgSize = (int) ((BytesMessage) msg).getBodyLength();
+      messageId = ((BytesMessage) msg).readInt();
+      producerId = ((BytesMessage) msg).readInt();
+      sentTime = ((BytesMessage) msg).readLong();
+            	
+      if(nextExpectedMsgId != messageId)
+      {
+         int numDroppedMessages = messageId - nextExpectedMsgId;
+         System.out.println(String.format("Dropped %d messages (expected: %d | received: %d)", numDroppedMessages, nextExpectedMsgId, messageId));
+      }
+            		
+      // send response message
+      ack.writeInt(messageId);
+      ack.writeInt(producerId);
+      ack.writeInt(clientId);
+      // message type
+      ack.writeInt(1);
+      ack.writeLong(sentTime);
+      ack.writeLong(System.currentTimeMillis());
+
+      try 
+      {
+         //System.out.println("sending ack");
+         ackProducer.send(ack);
+      } catch (JMSException e) 
+      {
+         e.printStackTrace();
+      }
+    			
+      ack.clearBody();
+            	
+            	
+      if((messageId % 50) ==0)
+      {
+         System.out.println(String.format("message id: %d - sent at: %d (%d bytes)", messageId, sentTime, msgSize));
+      }
+            	
+      nextExpectedMsgId = messageId + 1;
+      }
+      else 
+      {
+         System.out.println("Unexpected message type: "+msg.getClass());
+      }
+                          
+      if(messageId == -1)
+      {
+         running = false;
+         System.out.println(String.format("Received %d messages", messagesRecvd));
+      }            
+      }
+        
+      consumer.close();
+      System.exit(0);    
+}
+\end{lstlisting}
+
+\chapter{LATENCY BENCHMARK SOURCE CODE}
+\begin{lstlisting}
+package benchmarks;
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Hashtable;
+import java.util.Properties;
+
+import org.apache.qpid.amqp_1_0.jms.impl.*;
+
+import javax.jms.*;
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
+
+class LatencyTest
+{
+public static String readFile(String path) throws IOException
+{
+   StringBuilder sb = new StringBuilder();
+   try (BufferedReader br = new BufferedReader(new FileReader(path)))
+   {
+      String sCurrentLine;
+      while ((sCurrentLine = br.readLine()) != null)
+      {
+         sb.append(sCurrentLine);
+      }
+   }
+
+   return sb.toString();
+}
+    
+public static class SendProcessor implements Runnable
+{
+   private int producerId = 0;
+   private int numMessages = 0;
+   private String stringData;
+   private byte[] bytesData;
+   private long sendTime;
+   private int msgSize;
+   ConnectionFactory factory = null; 
+   Queue msgQueue = null;
+   Queue ackQueue = null;
+   Destination msgDest = null;
+   Destination ackDest = null;
+   boolean createQueue = false;
+   BufferedWriter writer;
+   boolean running = true;
+   Session session = null;
+   Connection connection = null;
+   MessageProducer producer = null;
+   MessageConsumer consumer = null;
+   StringBuffer testData = new StringBuffer();
+   int messageId;
+   int consumerId;
+   int msgType;
+   long sentTime;
+   long ackTimeSent;
+   long ackTimeRecvd;
+        
+   public void setOuputFile(BufferedWriter writer)
+   {
+      this.writer = writer;
+   }
+    	 
+   public void setProducerId(int id) 
+   {
+      this.producerId = id;
+   }
+   public void setCreateQueue() 
+   {
+      createQueue = true;
+   }
+
+   public void setFactory(ConnectionFactory factory) 
+   {
+      this.factory = factory;
+   }
+        
+   public void setMsgQueue(Queue queue) 
+   {
+      this.msgQueue = queue;
+   }
+        
+   public void setAckQueue(Queue queue) 
+   {
+      this.ackQueue = queue;
+   }
+
+   public void setNumMessages(int numMessages) 
+   {
+      this.numMessages = numMessages;
+   }
+		
+   public void setMsgSize(int msgSize) 
+   {
+      this.msgSize = msgSize;
+   }
+		
+   private void receiveAck()
+   {
+      Message msg = null;
+      try 
+      {
+         msg = consumer.receive();
+	} catch (JMSException e) 
+	{
+	   e.printStackTrace();
+	}
+				
+	if( msg instanceof  BytesMessage ) 
+	{
+      	   messageId = 0;
+      	   producerId = 0;
+      	   consumerId = 0;
+      	   msgType = 0;
+      	   sentTime = 0;
+      	   ackTimeSent = 0;
+      	   ackTimeRecvd = 0;
+	   try
+	   {
+		messageId = ((BytesMessage) msg).readInt();
+		producerId = ((BytesMessage)msg).readInt();
+		consumerId = ((BytesMessage) msg).readInt();
+		msgType = ((BytesMessage) msg).readInt();
+		sentTime = ((BytesMessage) msg).readLong();
+		ackTimeSent = ((BytesMessage) msg).readLong();
+		ackTimeRecvd = System.currentTimeMillis();
+	   } catch (JMSException e) 
+	   {
+	     e.printStackTrace();
+	   }
+	   try 
+	      {
+	      	//System.out.println("writing some stuff");
+		writer.write(messageId + ",");
+		writer.write(producerId + ",");
+		writer.write(consumerId + ",");
+		writer.write(msgType + ",");
+			
+		if(msgType == 1)
+		{
+	   	   writer.write(sentTime + ",");
+		   writer.write(ackTimeSent + ",");
+		   writer.write(ackTimeRecvd + ",");
+		}
+		else
+		{
+		   writer.write(0 + ",");
+		   writer.write(ackTimeSent + ",");
+		   writer.write(ackTimeRecvd + ",");
+		}
+	        writer.newLine();
+	        } 
+	        catch (IOException e) 
+          	{
+		   e.printStackTrace();
+		}
+          	if(messageId == -1)
+          	{
+          	   running = false;
+                }  
+	      }
+	      else 
+	      {
+	         //System.out.println("Unexpected message type: "+msg.getClass());
+	      }  
+	    }
+    
+   @Override
+   public void run() 
+   {
+      for (int i=0; i < this.msgSize; i++) 
+      {  
+         testData.append("x"); 
+      }  
+        
+      stringData = testData.toString();   // If you wanted to go char by char
+      bytesData = stringData.getBytes();
+        	
+      try 
+      {
+         connection = factory.createConnection();
+	 connection.start();
+	 session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+	 if(createQueue == false)
+	 {
+	    producer = session.createProducer(msgQueue);
+	    consumer = session.createConsumer(ackQueue);
+	 }
+	else
+	{
+	   msgDest = new QueueImpl("queue://msgs");
+	   ackDest = new QueueImpl("queue://acks");
+	   producer = session.createProducer(msgDest);
+	   consumer = session.createConsumer(ackDest);
+	}
+			
+	producer.setPriority(9);
+	producer.setDeliveryMode(DeliveryMode.NON_PERSISTENT);
+			
+	} catch (JMSException e) 
+	{
+	   e.printStackTrace();
+	}
+	BytesMessage msg = null;
+	try 
+	{
+	   msg = session.createBytesMessage();
+	} catch (JMSException e) 
+	{
+	   e.printStackTrace();
+	}
+        for( int i=1; i <= numMessages; i ++) 
+    	{
+      	   // Put data into the output message
+      	   try 
+      	   {    
+              msg.writeInt(i);
+              msg.writeInt(producerId);
+              msg.writeLong(System.currentTimeMillis());
+              msg.writeBytes(bytesData);
+				
+	   } catch (JMSException e)
+	   {
+              e.printStackTrace();
+	   }
+            
+      //System.out.println(String.format("msg id: %d -> send time: %d", i, sendTime));
+      // Send the message
+      try 
+      {
+         producer.send(msg);
+      } catch (JMSException e) 
+      {
+         e.printStackTrace();
+      }
+            
+      if((i % 100) == 0)
+      {
+      	 System.out.println(String.format("Sent %d messages", i));
+      }
+
+      // Receive ack
+      receiveAck();
+      
+      try 
+      {
+         msg.clearBody();
+      } catch (JMSException e) 
+      {
+         e.printStackTrace();
+      }	
+   }
+        
+   //send shutdown message
+   try 
+   {
+      msg.writeInt(-1);
+      msg.writeInt(producerId);
+      msg.writeLong(System.currentTimeMillis());
+      producer.send(msg);
+   } catch (JMSException e1) 
+   {
+      e1.printStackTrace();
+   }
+      	   
+    /*
+    // close the connection
+    try 
+    {
+       connection.close();
+    } 
+    catch (JMSException e) 
+    {
+       e.printStackTrace();
+    }
+  */
+ }  	
+}
+    
+public static void main(String []args) throws Exception 
+{    	
+   SendProcessor sendProcessor = new SendProcessor();
+   Thread sendThread = null;
+   String brokerType = "unknown";
+   int numMessages = 1000;
+   int msgSize = 1000;
+   long startTime = 0;
+   long endTime = 0;
+   String propertyFileName = null;
+  
+   InitialContext context = null; 
+   // Read command line args
+   if (args.length != 1)
+   {
+  	System.out.println("Usage: LatencyTest propertiesFileName");
+        System.exit(-1);
+   }
+   else
+   {
+        propertyFileName = args[0];
+   }
+  	
+   Hashtable<String, String> env = new Hashtable<String, String>(); 
+   env.put(Context.INITIAL_CONTEXT_FACTORY, "org.apache.qpid.amqp_1_0.jms.jndi.PropertiesFileInitialContextFactory"); 
+   env.put(Context.PROVIDER_URL, propertyFileName); 
+   try 
+   {
+       context = new InitialContext(env);
+   } 
+   catch (NamingException e1) 
+   {
+        e1.printStackTrace();
+   }
+      
+   Properties properties = new Properties();
+   try 
+   {
+  	  properties.load(new FileInputStream(propertyFileName));
+   } 
+   catch (IOException e) 
+   {
+	e.printStackTrace();
+   }
+      
+   ConnectionFactory connectionFactory = (ConnectionFactory) context.lookup("brokerURI");
+   //connection = connectionFactory.createConnection();
+   Queue msgQueue = (Queue) context.lookup("MSGS");
+   Queue ackQueue = (Queue) context.lookup("ACKS");
+    
+   brokerType = properties.getProperty("brokerType");
+   numMessages = Integer.parseInt(properties.getProperty("numMessages"));
+   msgSize = Integer.parseInt(properties.getProperty("msgSize"));
+  	
+   // setup producer
+   sendProcessor.setFactory(connectionFactory);
+   sendProcessor.setMsgQueue(msgQueue);
+   sendProcessor.setAckQueue(ackQueue);
+   sendProcessor.setNumMessages(numMessages);
+   sendProcessor.setMsgSize(msgSize);
+   sendProcessor.setProducerId(1);
+  	
+   if(brokerType.equals("APOLLO"))
+   {
+	sendProcessor.setCreateQueue();
+   }
+  	
+   // Create output file
+   DateFormat df = new SimpleDateFormat("yyyy-MM-dd_HH.mm.ss");  
+   File csvFile = new File(brokerType + "_latency_" + numMessages + "_" + msgSize + "_" + df.format(new Date()) +".csv");  
+   FileWriter csvOutput = new FileWriter(csvFile);
+   BufferedWriter writer = new BufferedWriter( csvOutput );
+   writer.write("Message ID,");
+   writer.write("Producer ID,");
+   writer.write("Consumer ID,");
+   writer.write("Result,");
+   writer.write("Sent time,");
+   writer.write("Ack Sent Time,");
+   writer.write("Ack Recv Time,");
+   writer.newLine();
+      
+  // set output file in ackProcessor
+  sendProcessor.setOuputFile(writer);
+  // Create processing threads
+  sendThread = new Thread(sendProcessor);
+      
+  // start the message producer
+  startTime = System.currentTimeMillis();
+  sendThread.start();
+
+  // wait for threads to finish
+  sendThread.join();
+  endTime = System.currentTimeMillis();
+      
+   System.out.printf("Start time: %d\n", startTime);
+   System.out.printf("End time: %d\n", endTime);
+   float timeDeltaSec = ((float)(endTime - startTime)/1000);
+
+   System.out.printf("runtime: %f sec\n", timeDeltaSec);
+   writer.newLine();
+   writer.write("runtime," + timeDeltaSec + ",sec");
+   writer.newLine();
+    
+   // close output files
+   writer.flush();
+   writer.close();
+   csvOutput.close();
+   System.exit(0);
+  }
+}
+\end{lstlisting}
+
+\chapter{BANDWIDTH BENCHMARK SOURCE CODE}
+\begin{lstlisting}
+package benchmarks;
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Hashtable;
+import java.util.Properties;
+
+import org.apache.qpid.amqp_1_0.jms.impl.*;
+
+import javax.jms.*;
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
+
+class BandwidthTest 
+{
+public static String readFile(String path) throws IOException
+{
+  StringBuilder sb = new StringBuilder();
+  try (BufferedReader br = new BufferedReader(new FileReader(path)))
+  {
+    String sCurrentLine;
+    while ((sCurrentLine = br.readLine()) != null)
+    {
+       sb.append(sCurrentLine);
+    }
+  }
+  return sb.toString();
+}
+    
+public static class SendProcessor implements Runnable
+{
+    private int producerId = 0;
+    private int numMessages = 0;
+    private String stringData;
+    private byte[] bytesData;
+    private long sendTime;
+    private int msgSize;
+    ConnectionFactory factory = null; 
+    Queue msgQueue = null;
+    Queue ackQueue = null;
+    Destination msgDest = null;
+    Destination ackDest = null;
+    boolean createQueue = false;   
+    BufferedWriter writer;
+    boolean running = true;
+    Session session = null;
+    Connection connection = null;
+    MessageProducer producer = null;
+    MessageConsumer consumer = null;
+    StringBuffer testData = new StringBuffer();
+    int messageId;
+    int consumerId;
+    int msgType;
+    long sentTime;
+    long ackTimeSent;
+    long ackTimeRecvd;
+        
+    public void setOuputFile(BufferedWriter writer)
+    {
+    	this.writer = writer;
+    }
+    	 
+    public void setProducerId(int id) 
+    {
+       this.producerId = id;
+    }
+        
+    public void setCreateQueue() 
+    {
+       createQueue = true;
+    }
+
+    public void setFactory(ConnectionFactory factory) 
+    {
+       this.factory = factory;
+    }
+        
+    public void setMsgQueue(Queue queue) 
+    {
+       this.msgQueue = queue;
+    }
+
+    public void setAckQueue(Queue queue) 
+    {
+    	this.ackQueue = queue;
+    }
+
+    public void setNumMessages(int numMessages) 
+    {
+       this.numMessages = numMessages;
+    }
+		
+   public void setMsgSize(int msgSize) 
+   {
+      this.msgSize = msgSize;
+   }
+		
+ @Override
+ public void run() 
+ {
+      for (int i=0; i < this.msgSize; i++) 
+      {  
+         testData.append("x"); 
+      }  
+
+   stringData = testData.toString();   // If you wanted to go char by char
+   bytesData = stringData.getBytes();
+	        	
+   try 
+   {
+      connection = factory.createConnection();
+      connection.start();
+      session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+			
+      if(createQueue == false)
+      {
+         producer = session.createProducer(msgQueue);
+      }
+      else
+      {
+         msgDest = new QueueImpl("queue://msgs");
+	 producer = session.createProducer(msgDest);
+      }
+      producer.setDeliveryMode(DeliveryMode.NON_PERSISTENT);
+				
+   } catch (JMSException e) 
+   {
+      e.printStackTrace();
+   }
+
+   BytesMessage msg = null;
+   try 
+   {
+      msg = session.createBytesMessage();
+   } catch (JMSException e) 
+   {
+      e.printStackTrace();
+   }
+	        
+   for( int i=1; i <= numMessages; i ++) 
+   {
+      // Put data into the output message
+      try 
+      {    
+         msg.writeInt(i);
+         msg.writeInt(producerId);
+         msg.writeLong(System.currentTimeMillis());
+         msg.writeBytes(bytesData);
+      } catch (JMSException e) 
+      {
+         e.printStackTrace();
+      }
+	            
+      //System.out.println(String.format("msg id: %d -> send time: %d", i, sendTime));
+      // Send the message
+      try 
+      {
+         producer.send(msg);
+      } catch (JMSException e) 
+      {
+	e.printStackTrace();
+      }
+	            
+      if((i % 100) == 0)
+      {
+         System.out.println(String.format("Sent %d messages", i));
+      }            
+      try 
+      {
+         msg.clearBody();
+      } 
+      catch (JMSException e) 
+      {
+         e.printStackTrace();
+      }
+   }
+	        
+   //send shutdown message
+   try 
+   {
+      msg.writeInt(-1);
+      msg.writeInt(producerId);
+      msg.writeLong(System.currentTimeMillis());
+      producer.send(msg);
+   } 
+   catch (JMSException e1) 
+   {
+      e1.printStackTrace();
+   }
+        	   
+   /*
+   // close the connection
+   try 
+   {
+      connection.close();
+   } catch (JMSException e) 
+   {
+      e.printStackTrace();
+   }
+   */
+}    	
+}
+    
+public static class AckProcessor implements Runnable
+{
+   BufferedWriter writer;
+   boolean running = true;
+   MessageConsumer consumer = null;
+   ConnectionFactory factory = null;
+   Queue queue = null;
+   Destination dest = null;
+   boolean createQueue = false;
+
+   public void setCreateQueue() 
+   {
+      createQueue = true;
+   }
+    	
+   public void setFactory(ConnectionFactory factory) 
+   {
+      this.factory = factory;
+   }
+        
+   public void setQueue(Queue queue) 
+   {
+      this.queue = queue;
+   }
+
+   public void setOuputFile(BufferedWriter writer)
+   {
+   	this.writer = writer;
+   }
+        
+   public void terminate()
+   {
+      running = false;
+      try 
+      {
+         consumer.close();
+      }  
+      catch (JMSException e) 
+      {
+         e.printStackTrace();
+      }
+    }
+   
+   @Override
+   public void run()
+   {	
+      Session session = null;
+      Connection connection = null;      
+      try 
+      {
+         connection = factory.createConnection();
+	 connection.start();
+	 session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+	
+	 if(createQueue == false)
+	 {
+	   consumer = session.createConsumer(queue);
+	 }
+	else
+	{
+	   dest = new QueueImpl("queue://acks");
+	   consumer = session.createConsumer(dest);
+	}
+      } catch (JMSException e) 
+      {
+         e.printStackTrace();
+      }
+			
+      System.out.println("Waiting for messages...");
+      int messageId;
+      int consumerId;
+      int producerId;
+      int msgType;
+      long sentTime;
+      long ackTimeSent;
+      long ackTimeRecvd;
+      while(running == true) 
+      {    	
+         Message msg = null;
+	 try 
+        {
+	   msg = consumer.receive();
+	} 
+	catch (JMSException e) 
+        {
+	   e.printStackTrace();
+	}
+	if( msg instanceof  BytesMessage ) 
+        {
+          messageId = 0;
+          producerId = 0;
+          consumerId = 0;
+          msgType = 0;
+          sentTime = 0;
+          ackTimeSent = 0;
+          ackTimeRecvd = 0;
+	  try
+	  {
+	     messageId = ((BytesMessage) msg).readInt();
+	     producerId = ((BytesMessage)msg).readInt();
+	     consumerId = ((BytesMessage) msg).readInt();
+	     msgType = ((BytesMessage) msg).readInt();
+	     sentTime = ((BytesMessage) msg).readLong();
+	     ackTimeSent = ((BytesMessage) msg).readLong();
+	     ackTimeRecvd = System.currentTimeMillis();
+	  } catch (JMSException e) 
+          {
+	    e.printStackTrace();
+	  }
+				
+          try 
+          {
+    	    writer.write(messageId + ",");
+    	    writer.write(producerId + ",");
+            writer.write(consumerId + ",");
+            writer.write(msgType + ",");
+					
+            if(msgType == 1)
+            {
+               writer.write(sentTime + ",");
+    	       writer.write(ackTimeSent + ",");
+    	       writer.write(ackTimeRecvd + ",");
+    	    }
+    	    else
+    	    {
+    	       writer.write(0 + ",");
+    	       writer.write(ackTimeSent + ",");
+    	       writer.write(ackTimeRecvd + ",");
+    	    }
+            
+            writer.newLine();
+          } 
+         catch (IOException e) 
+         {
+	    e.printStackTrace();
+	 }
+
+        if(messageId == -1)
+        {
+       	   running = false;
+        }
+                
+        }
+        else 
+        {
+            //System.out.println("Unexpected message type: "+msg.getClass());
+        }
+                
+      }
+    }
+  }
+    
+public static void main(String []args) throws Exception 
+{
+   AckProcessor ackProcessor = new AckProcessor();
+   Thread ackThread = null;
+   SendProcessor sendProcessor = new SendProcessor();
+   Thread sendThread = null;
+   String brokerType = "unknown";
+   int numMessages = 1000;
+   int msgSize = 1000;
+   long startTime = 0;
+   long endTime = 0;
+   String propertyFileName = null;
+   InitialContext context = null;
+    
+   // Read command line args
+   if (args.length != 1)
+   {
+      System.out.println("Usage: Producer propertiesFileName");
+      System.exit(-1);
+   }
+   else
+   {
+      propertyFileName = args[0];
+   }
+	
+   Hashtable<String, String> env = new Hashtable<String, String>(); 
+   env.put(Context.INITIAL_CONTEXT_FACTORY, "org.apache.qpid.amqp_1_0.jms.jndi.PropertiesFileInitialContextFactory"); 
+   env.put(Context.PROVIDER_URL, propertyFileName); 
+   try 
+   {
+	context = new InitialContext(env);
+   } catch (NamingException e1) 
+   {
+	 e1.printStackTrace();
+   }
+    
+   Properties properties = new Properties();
+   try 
+   {
+      properties.load(new FileInputStream(propertyFileName));
+   } catch (IOException e) 
+   { 
+  	e.printStackTrace();
+   }
+    
+   ConnectionFactory connectionFactory = (ConnectionFactory) context.lookup("brokerURI");
+   //connection = connectionFactory.createConnection();
+   Queue msgQueue = (Queue) context.lookup("MSGS");
+   Queue ackQueue = (Queue) context.lookup("ACKS");
+
+   brokerType = properties.getProperty("brokerType");
+   numMessages = Integer.parseInt(properties.getProperty("numMessages"));
+   msgSize = Integer.parseInt(properties.getProperty("msgSize"));
+	
+   // setup producer
+   sendProcessor.setFactory(connectionFactory);
+   sendProcessor.setMsgQueue(msgQueue);
+   sendProcessor.setAckQueue(ackQueue);
+   sendProcessor.setNumMessages(numMessages);
+   sendProcessor.setMsgSize(msgSize);
+   sendProcessor.setProducerId(1);
+	
+   if(brokerType.equals("APOLLO"))
+   {
+      ackProcessor.setCreateQueue();
+      sendProcessor.setCreateQueue();
+   }
+	
+   ackProcessor.setFactory(connectionFactory);
+   ackProcessor.setQueue(ackQueue);
+    
+   // Create output file
+   DateFormat df = new SimpleDateFormat("yyyy-MM-dd_HH.mm.ss");  
+   File csvFile = new File(brokerType + "_bandwidth_" + numMessages + "_" + msgSize + "_" + df.format(new Date()) +".csv");  
+   FileWriter csvOutput = new FileWriter(csvFile);
+   BufferedWriter writer = new BufferedWriter( csvOutput );
+   writer.write("Message ID,");
+   writer.write("Producer ID,");
+   writer.write("Consumer ID,");
+   writer.write("Result,");
+   writer.write("Sent time,");
+   writer.write("Ack Sent Time,");
+   writer.write("Ack Recv Time,");
+   writer.newLine();
+    
+   // set output file in ackProcessor
+   ackProcessor.setOuputFile(writer);
+	
+   // Create processing threads
+   ackThread = new Thread(ackProcessor);
+   sendThread = new Thread(sendProcessor);
+    
+   ackThread.start();
+	
+  Thread.sleep(2000);
+    
+  // start the message producer
+  startTime = System.currentTimeMillis();
+  sendThread.start();
+
+  // wait for threads to finish
+  sendThread.join();
+  ackThread.join();
+  endTime = System.currentTimeMillis();
+    
+  System.out.printf("Start time: %d\n", startTime);
+  System.out.printf("End time: %d\n", endTime);
+  float timeDeltaSec = ((float)(endTime - startTime)/1000);
+  float throughput = numMessages / timeDeltaSec;
+  float bandwidth = ((float)(numMessages * msgSize) / timeDeltaSec/1000000);
+  
+  System.out.printf("runtime: %f sec\n", timeDeltaSec);
+  System.out.printf("throughput: %f messages/sec\n", throughput);
+  System.out.printf("bandwidth: %f MB/sec\n", bandwidth);
+  
+  writer.newLine();
+  writer.write("runtime," + timeDeltaSec + ",sec");
+  writer.newLine();
+  writer.write("throughput," + throughput + ",msgs/sec");
+  writer.newLine();
+  writer.write("bandwidth," + bandwidth + ",MB/sec");
+  writer.newLine();
+    
+  // close output files
+  writer.flush();
+  writer.close();
+  csvOutput.close();
+  System.exit(0);
+}
+
+}
+
+\end{lstlisting}
 
 \end{document}

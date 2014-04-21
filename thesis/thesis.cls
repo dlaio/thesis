@@ -367,7 +367,7 @@
 \def\sigblock{
       \numcount=\numcomm
       %\leftline{Approved by the\hfil}
-      \leftline{Examining Committee:\hfil}
+      \leftline{Approved:\hfil}
       \vskip 28pt \vfil 
       \hrule width 2.8in \hfil \vskip -3pt
       \leftline{\adviser, \doctype Adviser\hfil} 

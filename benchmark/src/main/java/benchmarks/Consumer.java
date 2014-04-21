@@ -22,41 +22,10 @@ class Consumer {
 	
 	static final Logger logger = Logger.getLogger(Consumer.class.getName());
 
-	/*
-	public void sendNakMsg(int messageId)
-	{
-        // send response message
-		ack.writeInt(messageId);
-		// message type
-		ack.writeLong(sentTime);
-		ack.writeLong(System.currentTimeMillis());
-
-        try 
-        {
-        	ackProducer.send(ack);
-		} catch (JMSException e) 
-		{
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
-        ack.clearBody();
-	}
-	*/
-	
-	/*
-    public static class MsgProcessor implements Runnable
-    {
-    
-    }
-    */
-
     public static void main(String []args) throws JMSException, NamingException {
 
         boolean running = true;
     	int clientId = 0;
-    	//String msgChannelName = "msgs";
-    	//String ackChannelName = "acks";
     	int nextExpectedMsgId = 1;
     	int messageId = 0;
     	int producerId = 0;
@@ -64,9 +33,7 @@ class Consumer {
     	int msgSize = 0;
     	int messagesRecvd = 0;
     	
-    	//org.apache.log4j.BasicConfigurator.configure();
     	logger.trace("Entering application.");
-    	
     	
         Destination msgChannelDest = null;
         Destination ackChannelDest = null;
@@ -189,32 +156,6 @@ class Consumer {
             	{
             		int numDroppedMessages = messageId - nextExpectedMsgId;
             		System.out.println(String.format("Dropped %d messages (expected: %d | received: %d)", numDroppedMessages, nextExpectedMsgId, messageId));
-            		// TODO - send dropped message NAK
-            		/*
-            		for(int nakMsg = 0; nakMsg < numDroppedMessages; nakMsg++)
-            		{
-            			//sendNakMsg();
-                        // send response message
-            			ack.writeInt(messageId + nakMsg);
-            			ack.writeInt(producerId);
-            			ack.writeInt(clientId);
-            			// message type
-            			ack.writeInt(-1);
-            			ack.writeLong(sentTime);
-            			ack.writeLong(System.currentTimeMillis());
-
-                        try 
-                        {
-                        	ackProducer.send(ack);
-            			} catch (JMSException e) 
-            			{
-            				// TODO Auto-generated catch block
-            				e.printStackTrace();
-            			}
-            			
-                        ack.clearBody();
-            		}
-            		*/
             	}
             		
                 // send response message
@@ -232,7 +173,6 @@ class Consumer {
                 	ackProducer.send(ack);
     			} catch (JMSException e) 
     			{
-    				// TODO Auto-generated catch block
     				e.printStackTrace();
     			}
     			
@@ -260,7 +200,6 @@ class Consumer {
             
         }
         
-        //ackProducer.close();
         consumer.close();
         System.exit(0);
     }

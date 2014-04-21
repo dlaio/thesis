@@ -142,8 +142,7 @@ class LatencyTest {
 					e.printStackTrace();
 				}
 				
-				//System.out.println(String.format("message id: %d - (%d/%d/%d)", messageId, sentTime, ackTimeSent, ackTimeRecvd));
-	           	try 
+				try 
 	            {
 	           		//System.out.println("writing some stuff");
 					writer.write(messageId + ",");
@@ -291,15 +290,15 @@ class LatencyTest {
 			}
         	
         
-       /*
-        	// close the connection
-	        try {
-				//connection.close();
-			} catch (JMSException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			*/
+       	/*
+    	// close the connection
+        try {
+			//connection.close();
+		} catch (JMSException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		*/
 		}
     	
     }
