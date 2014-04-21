@@ -67,20 +67,10 @@
 \listoffigures         	 % required if there are figures
 
 \specialhead{ACKNOWLEDGMENT}
-Special thanks to: my wife Anne, my son Jack, my daughter Erin, and my parents Brian and Catherine.  Thanks for all the support.  
+Special thanks to: my wife Anne, my son Jack, my daughter Erin, and my parents Brian and Catherine.  Thanks for all the support and sorry for all the late nights and weekends away working on this.  Also thanks to Processors Eugene Eberbach and Houman Younessi.
 
 \specialhead{ABSTRACT}
 Message passing is a fundamental aspect of systems engineering.  Without a methodology to pass information between separate components building a distributed system is impossible.  When building a distributed system it is very common for teams/organizations to develop proprietary message passing systems.  Because of their isolated development, these systems usually fill a very niche role and do not interoperate with other implementations. \footnote{Many middleware implementations that fail because of this - The author has specifically implemented two such systems in his professional career.  Both were replaced with other systems unused because of lack of interoperability.} This is a fundamental problem when trying to build larger systems from subsystems.  Without a common language and transport getting different components to communicate is difficult if not impossible.  There have been many attempts to develop common languages and transports with varying amounts of success.  A new standard, developed by a consortium of large technology companies, the Advanced Message Queuing Protocol (AMQP) provides an open standard protocol for message orientated middleware (MOM).  There are currently several active AMQP compliant MOM implementations, both open-source and proprietary.  This project investigates the current state of several popular open-source AMQP message brokers, attempts to create a federated network of different implementations in order to collect benchmark information for both homogenous an heterogeneous broker networks.  To achieve this goal a simple AMQP messaging benchmark was developed and data collected from different broker architectures.  While it was possible to integrate some of the active broker implementations this project found that not all of the available implementations are interoperable and there are significant problems creating a reliable messaging system with the available AMQP implementations.  
-
-
-\chapter{INTRODUCTION}
-\todo{Have a section here to describe the goal of the project?}
-
-\begin{figure}[h]
-\centering
-\includegraphics[scale=.40]{table_of_amqp_message_brokers}  
-\caption{Table of AMQP versions }
-\end{figure}
 
 \chapter{BACKGROUND}
 
@@ -194,11 +184,19 @@ There are several major open source AMQP broker implementations.
 
 \begin{figure}[h]
 \centering
+\includegraphics[scale=.40]{table_of_amqp_message_brokers}  
+\caption{Table of AMQP versions }
+\end{figure}
+
+\begin{figure}[h]
+\centering
 \includegraphics[scale=.5]{broker_popularity}  
 \caption{Google trend data for AMQP implementations}
 \end{figure}
 
 RabbitMQ has recently overtaken ActiveMQ as the most popular choice.
+
+\todo{more here - work on layout}
 
 \subsection{RabbitMQ}
 RabbitMQ is an open source message broker written in the Erlang programming language \cite{RABBITMQ} RabbitMQ is developed by and supported by Rabbit Technologies Ltd.  It is actively being developed, the latest stable version (3.2.4) was released on March 4, 2014.  It is licensed under the Mozilla Public License \cite{rabbitmq-wikipedia}.  The development history/management of RabbitMQ is complicated.  Originally developed by Lshift, the project was moved to an independent company Rabbit Technologies Ltd, which was cofounded by Monadic and CohesiveFT.  In 2013, Rabbit Technologies Ltd. was acquired by SpringSource, a division of VMware, Inc. \cite{LSHIFT}.  As of March 2014 - commercial support for RabbitMQ was being provided by Pivotal, Ltd \cite{PIVOTAL}.  RabbitMQ is cross platform and has bindings/clients for a wide range of systems/programming languages \cite{RABBITMQ_CLIENTS}.  
@@ -390,9 +388,9 @@ Unfortunately, because ActiveMQ did not support federation using the AMQP protoc
 \label{activemq-activemq-latency}
 \end{figure}
 
-\begin{figure}[h] 
+\begin{figure}[tb] 
 \centering
-\includegraphics{qpid_qpid_bandwidth.png}
+ \makebox[\textwidth]{\includegraphics[width=.9\paperwidth, angle=90]{qpid_qpid_bandwidth.png}}
 \caption{Qpid(CPP)-Qpid(CPP) bandwidth}
 \label{qpid-qpid-bandwidth}
 \end{figure}
