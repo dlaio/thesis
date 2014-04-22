@@ -194,7 +194,7 @@ RabbitMQ has recently overtaken ActiveMQ as the most popular choice.
 RabbitMQ is an open source message broker written in the Erlang programming language \cite{RABBITMQ} RabbitMQ is developed by and supported by Rabbit Technologies Ltd.  It is actively being developed, the latest stable version (3.2.4) was released on March 4, 2014.  It is licensed under the Mozilla Public License.  The development history/management of RabbitMQ is complicated.  Originally developed by Lshift, the project was moved to an independent company Rabbit Technologies Ltd, which was cofounded by Monadic and CohesiveFT.  In 2013, Rabbit Technologies Ltd. was acquired by SpringSource, a division of VMware, Inc. \cite{LSHIFT}.  As of March 2014 - commercial support for RabbitMQ was being provided by Pivotal, Ltd \cite{PIVOTAL}.  RabbitMQ is cross platform and has bindings/clients for a wide range of systems/programming languages \cite{RABBITMQ_CLIENTS}.  
 
 \subsection{ActiveMQ}
-ActiveMQ is an open source message broker written in Java.  ActiveMQ is developed by the Apache Software Foundation and as of the writing of this report the most recent stable version is 5.9.0 released on October 21, 2013.  ActiveMQ is part of Apache's enterprise service bus (ESB) implementations, and is leveraged in other project such as Apache Camel and Apache CXF to Service Orientated Architecture (SOA) projects. 
+ActiveMQ is an open source message broker written in Java.  ActiveMQ is developed by the Apache Software Foundation and as of the writing of this report the most recent stable version is 5.9.0 released on October 21, 2013.  ActiveMQ is part of Apache's enterprise service bus (ESB) implementations, and is leveraged in other project such as Apache Camel and Apache CXF to Service Orientated Architecture (SOA) projects \cite{ACTIVEMQ}.
 
 \subsection{ApolloMQ}
 ApolloMQ is an open source message broker written in Java.  It is a fork of Apache ActiveMQ with the primary difference being the threading model and message dispatching architecture.  ApolloMQ maintains multi-protocol support and supports STOMP, AMQP 1.0, MQTT, OpenWire, SSL and WebSockets \cite{APOLLO}.
@@ -212,6 +212,7 @@ There are many different AMQP client libraries for connecting a software compone
 \end{figure}
 
 \chapter{Methodology}
+\section{Overview}
 This project is decomposed into three separate phases.  For the first phase, baseline performance data will be collected on the performance of each AMQP broker implementation in isolation.  A very simple broker network configuration will be used, with a single broker, consumer and producer.
 
 \begin{figure}[h]
@@ -228,7 +229,7 @@ The third phase is to create heterogeneous broker networks using the same broker
 
 Each step will be completed independently using the same lab setup, computing hardware and software.  As much as possible outside factors will be minimized to help ensure that the collected data is comparable.  AMQP brokers are complicated software components, with many interacting parts so care must be taken to ensure that the data collected is reliable.  
 
-\section{Hardware setup}
+\section{Hardware}
 A lab environment was setup to isolate the tests and minimize outside interference.  The test hardware was over-specified to ensure that the benchmark hardware was not a limiting factor in the experiment.  A High-end workstation was used to host the AMQP message broker networks.  Business class laptop computers were used to run the benchmarking software.  All components were connected with as business class network switch.  The computers will use the latest Long-Term Support version of the Ubuntu Server operating system (12.04LTS) and will be configured to minimize background daemons and processes.  The times of all systems will be synchronized using a local NTP server.  A full list of the components used for this project is included in Figure \ref{hardware_components} and \ref{network_components}.
 
 \begin{figure}[h]
