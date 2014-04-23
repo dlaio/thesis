@@ -20,6 +20,7 @@
 \usepackage{listings}
 \usepackage{color}
 \usepackage{hyperref}
+\usepackage{wrapfig}
 
 \definecolor{dkgreen}{rgb}{0,0.6,0}
 \definecolor{gray}{rgb}{0.5,0.5,0.5}
@@ -42,10 +43,8 @@
   tabsize=3
 }
 
-%   Please refer to Figure~\ref{Figure 1}.  % Note \label command below
-
-\newcommand{\comment}[1]
-{\par {\bfseries \color{blue} #1 \par}} %comment showed
+%\newcommand{\comment}[1]
+%{\par {\bfseries \color{blue} #1 \par}} %comment showed
 
 %%%%%%%%%%%%%%%%%%%%  supply titlepage info  %%%%%%%%%%%%%%%%%%%%%
 \thesistitle{\bf Federating AMQP1.0 Message-oriented Middleware (MOM) brokers}        
@@ -53,34 +52,31 @@
 \degree{Master of Science}
 \department{Computer Science} 
 \projadviser{Dr. Eugene Eberbach}
-%  For a masters project use \projadviser instead of \thadviser, 
-%  and \coprojadviser and \cocoprojadviser if needed. 
 \submitdate{April 2014\\(For Graduation May 2014)}        
-
 %%%%%%%%%%%%%%%%%%%%%   end titlepage info  %%%%%%%%%%%%%%%%%%%%%%
       
 \begin{document} 
-\listoftodos
+%\listoftodos
 \titlepage            	 % Print titlepage          
 \tableofcontents          % required 
-\listoftables          	 % required if there are tables
+%\listoftables          	 % required if there are tables
 \listoffigures         	 % required if there are figures
 
 \specialhead{ACKNOWLEDGMENT}
-Special thanks to: my wife Anne, my son Jack, my daughter Erin, and my parents Brian and Catherine.  Thanks for all the support and sorry for all the late nights and weekends away working on this.  Also thanks to Professors Eugene Eberbach and Houman Younessi.
+Special thanks to: my wife Anne, my son Jack, my daughter Erin, and my parents Brian and Catherine.  Thanks for all the support and sorry for all the late nights and weekends spent working on this project.  Also thanks to Professors Eugene Eberbach and Houman Younessi.
 
 \specialhead{ABSTRACT}
-Message passing is a fundamental aspect of systems engineering.  Without a methodology to pass information between separate components building a distributed system is impossible.  When building a distributed system it is very common for teams/organizations to develop proprietary message passing systems.  Because of their isolated development, these systems usually fill a very niche role and do not interoperate with other implementations. \footnote{Many middleware implementations that fail because of this - The author has specifically implemented two such systems in his professional career.  Both were replaced with other systems unused because of lack of interoperability.} This is a fundamental problem when trying to build larger systems from subsystems.  Without a common language and transport getting different components to communicate is difficult if not impossible.  There have been many attempts to develop common languages and transports with varying amounts of success.  A new standard, developed by a consortium of large technology companies, the Advanced Message Queuing Protocol (AMQP) provides an open standard protocol for message orientated middleware (MOM).  There are currently several active AMQP compliant MOM implementations, both open-source and proprietary.  This project investigates the current state of several popular open-source AMQP message brokers, attempts to create a federated network of different implementations in order to collect benchmark information for both homogenous an heterogeneous broker networks.  To achieve this goal a simple AMQP messaging benchmark was developed and data collected from different broker architectures.  While it was possible to integrate some of the active broker implementations this project found that not all of the available implementations are interoperable and there are significant problems creating a reliable messaging system with the available AMQP implementations.  
+Message passing is a fundamental aspect of systems engineering.  Without a methodology to pass information between separate components building a distributed system is impossible.  When building a distributed system it is very common for teams/organizations to develop proprietary message passing systems.  Because of their isolated development, these systems usually fill a very niche role and do not interoperate with other implementations.\footnote{Many middleware implementations that fail because of this - The author has specifically implemented two such systems in his professional career.  Both were replaced with other systems unused because of lack of interoperability.} This is a fundamental problem when trying to build larger systems from subsystems.  Without a common language and transport getting different components to communicate is difficult if not impossible.  There have been many attempts to develop common languages and transports with varying amounts of success.  A new standard, developed by a consortium of large technology companies, the Advanced Message Queuing Protocol (AMQP) provides an open standard protocol for message orientated middleware (MOM).  There are currently several active AMQP compliant MOM implementations, both open-source and proprietary.  This project investigates the current state of several popular open-source AMQP message brokers, attempts to create a federated network of different implementations in order to collect benchmark information for both homogenous an heterogeneous broker networks.  To achieve this goal a simple AMQP messaging benchmark was developed and data collected from different broker architectures.  While it was possible to integrate some of the active broker implementations this project found that not all of the available implementations are interoperable and there are significant problems creating a reliable messaging system with the available AMQP implementations.  
 
 \chapter{BACKGROUND}
 
 \section{Middleware}
-In computer science, the term \"middleware\" has many meanings.  Generically, middleware can be thought as \"glue\"  for computer software.  It facilitates communication between different software components - abstracting the complexities of intra and inter process communication from a software component.  In a broad sense many things that do clearly resemble a communication context are technically middleware.  User space software drivers, virtual machines (Java not VMware) and kernel Inter-process Communication (IPC) mechanisms are all forms of middleware.  This paper focuses on middleware as it relates to distributed applications - typically used to share data and state between software components.  Middleware at this level typically facilitates communication over a network and allows for components to work together in separate execution environments.  Even with this narrow definition there are many different classes of middleware systems.  Some of the common design patterns used are: enterprise application integration (EAI), data integration (DI), message-oriented middleware (MOM), object request brokers (ORB) and the enterprise service bus (ESB).  This paper specifically focuses on message-oriented middleware. 
+In computer science, the term "middleware" has many meanings.  Generically, middleware can be thought as "glue"  for computer software.  It facilitates communication between different software components - abstracting the complexities of intra and inter process communication from a software component.  In a broad sense many things that do clearly resemble a communication context are technically middleware.  User space software drivers, virtual machines (Java not VMware) and kernel Inter-process Communication (IPC) mechanisms are all forms of middleware.  This paper focuses on middleware as it relates to distributed applications - typically used to share data and state between software components.  Middleware at this level typically facilitates communication over a network and allows for components to work together in separate execution environments.  Even with this narrow definition there are many different classes of middleware systems.  Some of the common design patterns used are: enterprise application integration (EAI), data integration (DI), message-oriented middleware (MOM), object request brokers (ORB) and the enterprise service bus (ESB).  This paper specifically focuses on message-oriented middleware. 
 
 \subsection{Message Oriented Middleware (MOM)}
 Message-oriented middleware (MOM) is a middleware design that is focused on sending discrete blocks of information (messages) between processing components.  Messages can contain state information, commands or pure input data - it is up to the processing components to identify and process the messages according to their contents.  MOM systems are inherently asynchronous - processing components typically execute independently and are not synchronized to process in lockstep.
 
-A fundamental component of MOM systems is a message broker.  A message broker is acts as an intermediary - all messages sent through a MOM system must be sent to a message broker.  A message broker performs many of the same functions as a network router on an ethernet network, but at application layer \cite{zimmermann1980osi}.  Message brokers can connect to either message producers, consumers or other message brokers - and are responsible for routing messages from the producer to consumer.  Frequently, message brokers are designed to do more than just route messages and are designed with the ability to store messages locally in order to provide message reliability.  Message brokers are often able to handle message duplication - that is to forward a message to multiple clients and provide for quality of service (QOS) to be applied to messages.  
+A fundamental component of some MOM systems is a message broker.  A message broker is acts as an intermediary - all messages sent through a MOM system must be sent to a message broker.  A message broker performs many of the same functions as a network router on an ethernet network, but at application layer \cite{zimmermann1980osi}.  Message brokers can connect to either message producers, consumers or other message brokers - and are responsible for routing messages from the producer to consumer.  Frequently, message brokers are designed to do more than just route messages and are designed with the ability to store messages locally in order to provide message reliability.  Message brokers are often able to handle message duplication - that is to forward a message to multiple clients and provide for quality of service (QOS) to be applied to messages.  
 
 While a message broker can provide many benefits, by adding an additional component between message producers and consumers this can reduce performance and reliability.  MOM systems also frequently require a significant amount of configuration to setup properly and add an extra layer of complexity when trying to debug a system.
  
@@ -88,43 +84,26 @@ While a message broker can provide many benefits, by adding an additional compon
 %There are many implementations of such messaging systems, many are closed source proprietary, but recently there has been a lot of activity in the open source community.
 
 \section{Advanced Message Queuing Protocol (AMQP)}
-The Advanced Message Queueing Protocol (AMQP) is a standard published by the Organization for the Advancement of Structured Information Standards (OASIS) \cite{OASIS}.  In the Open Systems Interconnection (OSI) model AMQP is a application layer protocol, it exists in the same space as other protocols as the File Transfer Protocol (FTP), Dynamic Host Control Protocol (DHCP), etc.  \cite{o2007toward}.  The AMQP specifies both message format and and a communication language.  This is in direct contract to previous attempts to standardize middleware at the API level, e.g. Java Messaging Service (JMS) \cite{ORACLE_JMS}.
+The Advanced Message Queueing Protocol (AMQP) is a standard published by the Organization for the Advancement of Structured Information Standards (OASIS) \cite{OASIS}.  In the Open Systems Interconnection (OSI) model AMQP is a application layer protocol, it exists in the same space as other protocols as the File Transfer Protocol (FTP), Dynamic Host Control Protocol (DHCP), etc.  \cite{o2007toward}.  The AMQP specifies both message format and and a communication language.  This is in direct contrast to previous attempts to standardize middleware at the API level, e.g. Java Messaging Service (JMS) \cite{ORACLE_JMS}, which because did not specify a protocol limited interoperability. 
 
 \section{AMQP History}
-The development of AMQP was started in 2003 by John O'Hara and others at JPMorgan Chase in London, UK \cite{o2007toward}.  JPMorgan was looking for a messaging solution with high durability that supported a very high number of small message transactions (in the range of 500,000 messages/second) \cite{kramer2009advanced}.  In the financial sector accurate and reliable message passing is clearly very important.  Losing a message or delays in message processing have clear economic consequences.  At the time O'Hara found that the commercial middleware products could not deliver the level of service required,  and banks were known to develop their own enterprise middleware to fill in the gaps. However, developing enterprise middleware is complex and difficult, and bank middleware would come and go \cite{kramer2009advanced}.
+The development of AMQP was started in 2003 by John O'Hara and others at JPMorgan Chase in London, UK \cite{o2007toward}.  JPMorgan was looking for a messaging solution with high durability that supported a very high number of small message transactions (in the range of 500,000 messages/second) \cite{kramer2009advanced}.  In the financial sector accurate and reliable message passing is clearly very important; losing a message or delays in message processing have clear economic consequences.  At the time O'Hara found that the commercial middleware products could not deliver the level of service required, and banks were known to develop their own enterprise middleware to fill in the gaps. However, developing enterprise middleware is complex and difficult, and there no standardization among the various implementations \cite{kramer2009advanced}.
 
 O'hara used protocols such as HTTP, TCP and FTP as models for the new protocol, and wanted to ensure that the specification for the protocol was open and royalty-free \cite{o2007toward}.  Initial development was done internally at JPMorgan Chase but was later subcontracted with iMatix Corporation for a broker and protocol documentation \cite{Cameron}.  This work lead to the creation of the OpenAMQ message broker, which is no longer being actively developed \cite{openamq-eol}. 
 
 In 2005 JPMorgan Chase partnered with companies such as: Cisco Systems, Red Hat, iMatix and the Transaction Workflow Innovation Standards Team (TWIST) to form an AMQP working group.  There have been five major releases of the AMQP standard \cite{AMQP_SPECS}.
 
-\begin{figure}[h]
+\begin{figure}[ht]
 \centering
 \includegraphics[scale=.5]{amqp_versions}  
-\caption{Table of AMQP versions }
+\caption{AMQP versions}
+\label{fig:amqp-versions}
 \end{figure}
 
-%At the same time JPMorgan Chase partnered with Red Hat to create Apache Qpid \cite{QPID_HOMEPAGE} and Rabbit Technologies independently implemented RabbitMQ \cite{RABBITMQ}.
-%In June 2006 - AMQP version 0-8 was released. - http://www.amqp.org/specification/0-8/amqp-org-download
-%In December 2006 - AMQP version 0-9 was released. - http://www.amqp.org/specification/0-9/amqp-org-download
-%In November 2008 - AMQP version 0-9-1 was released. - http://www.amqp.org/specification/0-9-1/amqp-org-download
-%In February 2008 - AMQP version 0-10 was released.  - http://www.amqp.org/specification/0-10/amqp-org-download
-%JPMorgan Chase collaborated with Red Hat to develop the Apache Qpid MOM implementation.  Independently, RabbitMQ was developed by Rabbit Technologies as well as AMQP complient implementations by Microsoft and StormMQ.
-%The working group expanded to include 23 companies, including: Bank of America, Barclays, Credit Suisse, Deutsche B$\ddot{o}$rse Systems, Goldman Sachs, Microsoft Corporation, Novell, Red Hat, VMware and others.
-%The AMQP standard also defines message orientation, queuing, routing, reliability, and security.   AMQP also describes the wire-level format of the data so that any nodes that are AMQP compliant can handle the message stream.  
-%Standardization lead to the rapid development of many MOM systems such as: Apache Qpid, RabbitMQ, StormMQ, ActiveMQ, Apache Apollo, SwiftMQ.  Even Microsoft supports the AMQP1.0 protocol with their implementation of the ServiceBus class in .NET  and is a supported protocol on the Azure cloud computing platform.  
-%MOM implementations that support the AMQP version 1.0 specification (Released October 29th 2012) \cite{todo} are interoperable and are available on many platforms.  
-
-AMQP 1.0 was released by the AMQP working group on October 30th 2011.  The next day, on November 1st 2011, the AMQP working group announced its reorganization as a OASIS member section. \cite{AMQP}
+AMQP 1.0 was released by the AMQP working group on October 30th 2011.  The next day the AMQP working group announced its reorganization as a OASIS member section\cite{AMQP}.
 
 \section{AMQP 1.0}
-AMQP is a layered protocol.  The first layer defines a type system and a set of encodings that must be used to represent fundamental types.  The second layer defines an binary, peer-to-peed protocol for transporting messages between two nodes on a network.  Layer three defines the overall AMQP message format, its contents and header/footer structure.  Layer four defines a communication protocol and how to atomically cluster messages.  Layer five deals explicitly with security, which from the ground up is a fundamental part of AMQP \cite{AMQP1.0}. 
-
-\begin{figure}[h]
-\centering
-\includegraphics[scale=.75]{ohara1.jpg}  
-\caption{AMQP layers}
-\end{figure}
-\todo{Replace figure with own version}
+AMQP is a layered protocol.  The first layer defines a type system and a set of encodings that must be used to represent fundamental types.  The second layer defines an binary, peer-to-peed protocol for transporting messages between two nodes on a network.  The third layer defines the overall AMQP message format, its contents and header/footer structure.  The fourth,  defines a communication protocol and how to atomically cluster messages.  The fifth later explicitly deals with security, which from the ground up is a fundamental part of AMQP \cite{AMQP1.0}. 
 
 AMQP treats all nodes equally - it places no constraints on roles of connections endpoints.   Because of historical reasons most AMQP messaging systems are broker centric - client nodes connect to a centralized message passing mechanism to exchange messages.  At the most fundamental level a broker is a trusted intermediary, in the AMQP model a broker has three primary responsibilities \cite{o2007toward}:
 
@@ -134,28 +113,28 @@ AMQP treats all nodes equally - it places no constraints on roles of connections
 \item Routing and distributing messages 
 \end{enumerate}
 
-Message brokers all for the creation of messaging networks with varying complexity.  Brokers typically support both direct connections (single producer communicates with single consumer) and fanout configurations (single producer communicates with many consumers).  With these building blocks it is also possible to create very complicated broker networks with many tiers of producers, consumers and brokers. 
+Message brokers all for the creation of messaging networks with varying complexity.  Brokers typically support both direct connections (single producer communicates with single consumer) and fanout configurations (single producer communicates with many consumers).  With these building blocks it is also possible to create very complicated broker networks with many tiers of producers, consumers and brokers.  A simple example of a single producer, multiple consumer network with a single message broker can be seen in Figure \ref{fig:simple-fanout}.
 
-\begin{figure}[h]
+\begin{figure}[ht]
 \centering
 \includegraphics[scale=.75]{simple_fanout}  
 \caption{Simple broker network}
+\label{fig:simple-fanout}
 \end{figure}
 
 \subsection {Specific differences}
-
 AMQP 1.0 is a major departure from earlier AMQP versions.  While it imposes far fewer semantic requirements, the protocol is substantially more complex \cite{RABBITMQ_PROTOCOLS}.  Pre AMQP 1.0 versions specify both a  wire-level protocol and a broker architecture.  AMQP 1.0 only specifies a protocol and does not impose any architecture model on implementations \cite{REDHAT1}.
 
 AMQP 1.0 is a symmetric protocol, all nodes are treated equally.  Earlier versions were asymmetric - each connection needed a defined client and broker.  AMQP 1.0 allows for broker-less point-to-point connections.  AMQP versions before 1.0 also specified protocol commands to manage brokers.  AMQP 0-10 specifies commands such as "Create Queue", "Delete Queue", etc.  AMQP 1.0 does not define these messages as part of the protocol and assumes that this functionality will be part of each specific implementation \cite{REDHAT1}.  Previous AMQP versions had strict definitions for clients and brokers.  Every connection must have a defined client and server (broker).  AMQP 1.0 is not backwards compatible with earlier AMQP versions\cite{AMQP_VERSION_COMPATIBILITY}.
 
 \subsection{Backlash to AMQP 1.0}
-The release of AMQP 1.0 is not without controversy.  The 1.0 was a major departure from the previous AMQP versions and caused significant backlash among the AMQP community.  At least two of the major players in the AMQP working group have decided not to implement the 1.0 standard.  Even two years after the formal adoption of the AMQP 1.0 specification RabbitMQ does not directly support the AMQP 1.0 standard.  iMatix, one of the original members of the AMQP working group has moved away from the AMQP standard all together and now develops a competing messaging system $\emptyset$MQ \cite{ZERO_MQ, openamq-eol}. 
+The release of AMQP 1.0 was not without controversy.  Version 1.0 was a major departure from the previous AMQP versions and caused significant backlash among the AMQP community.  At least two of the major players in the AMQP working group have decided not to implement the 1.0 standard.  Even two years after the formal adoption of the AMQP 1.0 specification RabbitMQ does not directly support the AMQP 1.0 standard.  iMatix, one of the original members of the AMQP working group has moved away from the AMQP standard all together and now develops a competing messaging system $\emptyset$MQ \cite{ZERO_MQ, openamq-eol}. 
 
 \section{AMQP Alternatives}
-The AMQP specification is not unique in its goal of providing a cross-platform, ubiquitous message protocol.  There are several popular specifications in current use.  Many MOM implementations that support the AMQP protocol also support these other protocols; some are built in natively while others need to be enabled as plugins.   
+The AMQP specification is not unique in its goal of providing a cross-platform, ubiquitous message protocol.  There are several popular specifications in current use and many of MOM implementations tested in this project support support these other protocols.  Some are supported natively, while others need to be enabled as plugins.   
 
 \subsection{STOMP}
-Simple Text Oriented Message Protocol (STOMP) is a text-based protocol designed to work with message oriented middleware systems.  It defines a wire-level message encoding format that allows for STOMP clients to communicate with any STOMP enabled message broker.  It is built on top of TCP/IP and uses a protocol similar to HTTP \cite{STOMP}.
+Simple Text Oriented Message Protocol (STOMP) is a text-based protocol designed to work with message oriented middleware systems.  It defines a wire-level message encoding format that allows STOMP clients to communicate with any STOMP enabled message broker.  It is built on top of TCP/IP and uses a protocol similar to HTTP \cite{STOMP}.
 
 \subsection{OpenWire}
 OpenWire is a binary protocol used as the native wire format of ActiveMQ \cite{OPENWIRE}.
@@ -167,29 +146,28 @@ XMPP is a communications protocol based on XML.  Originally developed by the ope
 MQ Telemetry Transport (MQTT) is a light-weight messaging protocol.  It is specifically targeted for applications where a light-weight protocol is needed due to code size limitations.  The protocol was invented by Andy Stanford-Clark (IBM) and Arlen Nipper (Cirrus Link Solutions).  In 2013 the MQTT protocol specification was submitted to the OASIS specification body.  There is a variation of the standard (MQTT-S) for embedded applications on non-TCP/IP networks such as ZigBee.  Facebook Messenger uses the MQTT protocol internally for large parts of its functionality \cite{MQTT}. 
 
 \subsection{Java Messaging Service (JMS)}
-The Java EE JMS (Java Messaging Service) was the starting point for attempting to standardize MOM. Unfortunately, JMS only specifies an application programming interface (API) and does not specify a format for exchanged messages so it does not create interoperability.   To achieve this desired interoperability other standards such as AMQP (Advanced Message Queuing Protocol) built upon the JMS standards). 
+The Java EE JMS (Java Messaging Service) was the starting point for attempting to standardize MOM. Unfortunately, JMS only specifies an application programming interface (API) and does not specify a format for exchanged messages so it does not create interoperability.   To achieve this desired interoperability other standards such as AMQP built upon the JMS concept.  
 
 \section{AMQP implementations}
 
 \subsection{Broker implementations}
 There are several major open source AMQP broker implementations.  
 
-\begin{figure}[h]
+\begin{figure}[ht]
 \centering
-\label{amqp_broker_table}
 \includegraphics[scale=.40]{table_of_amqp_message_brokers}  
-\caption{Table of AMQP versions }
+\caption{AMQP versions}
+\label{fig:amqp-broker-table}
 \end{figure}
 
-\begin{figure}[h]
+\begin{figure}[ht]
 \centering
 \includegraphics[scale=.5]{broker_popularity}  
 \caption{Google trend data for AMQP implementations}
+\label{fig:google-trend}
 \end{figure}
 
-RabbitMQ has recently overtaken ActiveMQ as the most popular choice.
-
-\todo{more here - work on layout}
+For a long time Apache ActiveMQ was the most popular implementations, but recently RabbitMQ has recently overtaken ActiveMQ as the most popular choice.  RabbitMQ is a components in the popular Java Spring framework and this is a factor in the implementation's increased popularity. 
 
 \subsection{RabbitMQ}
 RabbitMQ is an open source message broker written in the Erlang programming language \cite{RABBITMQ} RabbitMQ is developed by and supported by Rabbit Technologies Ltd.  It is actively being developed, the latest stable version (3.2.4) was released on March 4, 2014.  It is licensed under the Mozilla Public License.  The development history/management of RabbitMQ is complicated.  Originally developed by Lshift, the project was moved to an independent company Rabbit Technologies Ltd, which was cofounded by Monadic and CohesiveFT.  In 2013, Rabbit Technologies Ltd. was acquired by SpringSource, a division of VMware, Inc. \cite{LSHIFT}.  As of March 2014 - commercial support for RabbitMQ was being provided by Pivotal, Ltd \cite{PIVOTAL}.  RabbitMQ is cross platform and has bindings/clients for a wide range of systems/programming languages \cite{RABBITMQ_CLIENTS}.  
@@ -204,96 +182,116 @@ ApolloMQ is an open source message broker written in Java.  It is a fork of Apac
 HornetQ is an open source, multi-protocol messaging system developed from JBoss, a division of Red Hat, Inc.  It can be integrated with JBoss Application Server or embedded into standalone applications.  As of version 2.2 it supports the AMQP1.0 specification \cite{HORNETQ_ROADMAP}.  HornetQ is released under the Apache Software License version 2.0.  There are a few components that are released under LGPL but the plan is to develop a pure ASL2.0 version in the future .  HornetQ is written in Java and supports and platform with a Java 5 or later runtime.   It is actively being developed and maintained with the last stable version 2.4.0 being released on December 16, 2013. \cite{HORNETQ}.  
 
 \subsection{Client implementations}
-There are many different AMQP client libraries for connecting a software components to an AMQP broker.  There are ports for most programming languages, for example RabbitMQ lists 175 different client libraries for over 21 different programming languages \cite{RABBITMQ_CLIENTS}.  The maturity and functionally for each client vary greatly.  Many of the client libraries are open source and have low activity, but there are several open source client libraries with active support.  There are also closed source, proprietary implementations and while they may be free to use there are license restrictions that make them unusable for this project. \footnote{Specificially SwiftMQ has a clause in their license that prohibits publishing benchmarking results without company approval} One of the most active and widely used client libraries is Apache's Qpid Proton library \cite{QPID_PROTON}, which has both C and Java implementations.  
+There are many different AMQP client libraries for connecting a software components to an AMQP broker.  There are ports for most programming languages, for example RabbitMQ lists 175 different client libraries for over 21 different programming languages \cite{RABBITMQ_CLIENTS}.  The maturity and functionally for each client vary greatly.  Many of the client libraries are open source and have low activity, but there are several open source client libraries with active support.  There are also closed source, proprietary implementations and while they may be free to use there are license restrictions that make them unusable for this project. \footnote{Specificially SwiftMQ has a clause in their license that prohibits publishing benchmarking results without company approval.} One of the most active and widely used client libraries is Apache's Qpid Proton library \cite{QPID_PROTON}, which has both C and Java implementations.
 
-\begin{figure}[h]
+\begin{figure}[ht]
 \centering
 \includegraphics[scale=.5]{client_comparision}  
 \caption{Summary of available AMQP clients}
+\label{fig:amqp-clients}
 \end{figure}
+
+For this project, Apache's Qpid JMS client library was used.  This client provides an AMQP fluent client library using the Java JMS 1.1 API.  At the time of this project's development, version 0.26 was the most recent release of this client library.  Apache Qpid JMS is a pure Java implementation and supports a significant amount of AMQP concepts such as: failover, heartbeats, transactions, SSL, flow control, and authentication.  There are many examples available and a pre-built library is available as a maven dependency \cite{APACHE-QPID-JMS}.  
 
 \chapter{Methodology}
 \section{Overview}
-This project is decomposed into three separate phases.  For the first phase, baseline performance data will be collected on the performance of each AMQP broker implementation in isolation.  A very simple broker network configuration will be used, with a single broker, consumer and producer.
+This project was decomposed into three separate phases.  This approach was taken so that verification and validation of the collected data could be performed.  
 
-\begin{figure}[h]
+For the first phase, baseline performance data was collected on the performance of each AMQP broker implementation in isolation.  A very simple broker network configuration was used, with a single broker, consumer and producer.
+
+\begin{figure}[ht]
 \centering
 \includegraphics[scale=.75]{direct_connect}  
 \caption{Simple AMQP broker network}
+\label{fig:simple-broker-network}
 \end{figure}
 
-There have been many experiments run with this configuration \cite{Chirino} \cite{Bayer}.  While this step is not novel it will allow us to compare results with independent AMQP evaluations to ensure that the developed benchmark produces reliable results. 
+There have been many experiments run with this configuration \cite{Chirino} \cite{Bayer}.  While this step is not novel it allowed for comparison of the results with independent AMQP evaluations to ensure that the developed benchmark produces reliable results. 
 
-The second phase for this project is to create simple broker networks of homogenous AMQP broker implementations and collect benchmark information.  The broker network configurations will follow the designs described by Marsh, Sampat, Potluri, Panda in \cite{marsh2010scaling} so that this data may again be compared to an independent evaluation to ensure that the collected results are valid.
+The second phase for this project created simple broker networks of homogenous AMQP broker implementations and collect benchmark information.  The broker network configurations followed the designs described by Marsh, Sampat, Potluri, Panda in \cite{marsh2010scaling}.  This again allowed for comparison independent evaluation to ensure that the collected results are valid.
 
-The third phase is to create heterogeneous broker networks using the same broker network architecture in step two.  This will allow for direct comparison of the impact of integrating different AMQP broker networks into a single system.  This will model one of the goals of the AMQP working group and will provide meaningful, real world data on the interoperability and performance of the AMQP broker implementations. 
+The third phase was to create heterogeneous broker networks using the same broker network architectures in step two.  The goal of this was to investigate the impact of integrating different AMQP broker implementations into a single system.  
 
-Each step will be completed independently using the same lab setup, computing hardware and software.  As much as possible outside factors will be minimized to help ensure that the collected data is comparable.  AMQP brokers are complicated software components, with many interacting parts so care must be taken to ensure that the data collected is reliable.  
+Each step was completed independently using the same lab setup, computing hardware and software.  As much as possible outside factors were minimized to help ensure that the collected data is comparable and independent of interference.  AMQP brokers are complicated software components, with many interacting parts so care must be taken to ensure that the data collected is reliable.  
 
 \section{Hardware}
-A lab environment was setup to isolate the tests and minimize outside interference.  The test hardware was over-specified to ensure that the benchmark hardware was not a limiting factor in the experiment.  A High-end workstation was used to host the AMQP message broker networks.  Business class laptop computers were used to run the benchmarking software.  All components were connected with as business class network switch.  The computers will use the latest Long-Term Support version of the Ubuntu Server operating system (12.04LTS) and will be configured to minimize background daemons and processes.  The times of all systems will be synchronized using a local NTP server.  A full list of the components used for this project is included in Figure \ref{hardware_components} and \ref{network_components}.
+A lab environment was setup to isolate the tests and minimize outside interference.  The test hardware was over-specified to ensure that the benchmark hardware was not a limiting factor in the experiment.  A high-end workstation was used to host the AMQP message broker networks.  Business class laptop computers were used to run the benchmarking software.  All components were connected with as business class network switch.  The workstation hosting the broker networks used the latest Long-Term Support version of the Ubuntu Server operating system (12.04LTS) and was configured to minimize background daemons and processes.  This workstation was setup as an Network Time Protocol (NTP) reference in order to synchronize the times between all of the computers used.  A full list of the computing components and network resources used for this project is included in Figure\ref{fig:hardware-components}.
 
 \begin{figure}[h]
 \centering
-\includegraphics{test_setup_2}  
+\includegraphics[scale=.7]{test_setup_2}  
 \caption{Hardware setup}
+\label{fig:harware-setup}
 \end{figure}
 
 \begin{figure}[h]
 \centering
-\label{hardware_components}
-\includegraphics[scale=.40]{hardware_components}  
+\includegraphics[scale=.30]{hardware_components}  
 \caption{Hardware components}
+\label{fig:hardware-components}
 \end{figure}
 
-\begin{figure}[h]
-\centering
-\label{network_components}
-\includegraphics[scale=.40]{network_hardware}  
-\caption{Network components}
-\end{figure}
-
-\subsection{Network design}
+\section{Network design}
 The design of the test network was kept as simple as possible.  The goal was to ensure that the network overhead was not the limiting factor in the benchmarks measurement.
 
 \begin{figure}[h]
 \centering
 \includegraphics{test_setup}  
 \caption{Network overview}
+\label{fig:network-overview}
 \end{figure}
 
 \section{Benchmark design}
-\todo{reword}
-The design of the benchmarks for this experiment was modeled after the work done by Subramoni, Marsh, Narravula, Lai and Panda in \cite{subramoni2008design} which in turn based their benchmarks on Ohio State University Micro-benchmarks \cite{OSU_MICRO_BENCHMARKS}.  There are two fundamental components to the benchmark application, an AMQP message producer and AMQP message consumer.  A high level overview of the software components can be seen in Figure~\ref{Benchmark Design}.  
+The design of the benchmarks for this experiment were modeled after the work done by Subramoni, Marsh, Narravula, Lai and Panda in \cite{subramoni2008design} which in turn based their benchmarks on Ohio State University Micro-benchmarks \cite{OSU_MICRO_BENCHMARKS}.  There are two fundamental components to the benchmark application, an AMQP message producer and AMQP message consumer.  A high level overview of the software components can be seen in Figure~\ref{benchmark-design}.  
 
-\begin{figure}[h]
+\begin{figure}[ht]
 \centering
-\includegraphics[scale=.75]{bandwidth_latency_throughput}  
-\caption{Relation between bandwidth, latency and througput}
+\includegraphics[scale=.70]{benchmark_design}  
+\caption{High level benchmark design}
+\label{benchmark-design}
 \end{figure}
 
-\subsection{Message Format}
-AMQP supports a wide variety of message formats.  For this experiment the \"BytesMessage\" format was used exclusively, this uses the binary encoding format as specified in AMQP1.0.  
-
-\subsection{Message Consumer}
-The message consumer is the simpler component, its job is to receive AMQP messages and send a response message back to the original message producer that contains a timestamp of when the source message was received.  The source code for the message consumer module can be found in Appendix \ref{consumer-code}.
-
-\subsection{Message Producer}
 The message producer is a multithreaded component responsible for sending example AMQP messages and recording message acknowledgments.  The functionality of sending messages was separated from the message acknowledgment management to minimize the impact of writing to disk on the benchmark's accuracy.  
 
-The source code for the latency-benchmark message producer can be found in Appendix \ref{latency-producer-code}.
+The message consumer is a simple component, its job is to receive AMQP messages and send a response message back to the original message producer that contains a timestamp of when the source message was received.  
 
-The source code for the bandwidth-benchmark message producer can be found in Appendix \ref{bandwidth-producer-code}.
+\subsection{Message Format}
+AMQP supports a wide variety of message formats.  For this experiment the "BytesMessage" format was used exclusively, this uses the binary encoding format as specified in AMQP1.0.  
+\pagebreak
+\subsection{Message Consumer}
+The message consumer is setup to run as a simple state machine as shown in Figure\ref{consumer-state-diagram}.  The module takes a single command line option, the name of a java context configuration file. 
+\begin{wrapfigure}{r}{0.3\textwidth}
+\begin{center}
+\vspace{-20pt}
+\includegraphics[width=.25\textwidth]{consumer_state_diagram}  
+\end{center}
+\vspace{-20pt}
+\caption{Consumer state diagram}
+\label{consumer-state-diagram}
+\end{wrapfigure}
+On initialization, the component reads its configuration the file specified on the command line and connects to the AMQP broker at the address specified in the configuration file.  If configured, it creates the message and acknowledgment channel, and then enters a loop waiting for input messages.  
 
-\begin{figure}[h]
-\centering
-\label{Benchmark Design}
-\includegraphics{benchmark_design}  
-\caption{benchmark design}
-\end{figure}
+As messages are received, the module creates a small response message that contains the time the input message was sent from the producer, a unique client identification number, and the time the response message was sent.  If the module detects an out of order message ID, it sends a warning message back to the message producer by setting a flag to -1.  If a message with ID = -1 is received, the module sends a response to the producer, setting the message ID of the response to -1, exits its main processing loop and closing the AMQP connection.  Note, that for some of the broker implementations closing the AMQP connection resulted in a software exception.
+
+The source code for the message consumer module can be found in Appendix\ref{consumer-code}. 
+\pagebreak
+\subsection{Message Producer}
+To get accurate benchmark results the message producer needed to be split into two separate components: a bandwidth benchmark message producer and a latency benchmark message producer.  Both components are very similar and follow the same basic state diagram as shown in Figure\ref{producer-state-diagram}.  Both components take a single command line option, the name of a java context configuration file.
+\begin{wrapfigure}{r}{0.3\textwidth}
+\begin{center}
+\vspace{-20pt}
+\includegraphics[width=.3\textwidth]{producer_state_diagram}  
+\end{center}
+\vspace{-20pt}
+\caption{Producer state diagram}
+\label{producer-state-diagram}
+\end{wrapfigure}
+The major difference between the bandwidth and latency benchmark message producers is how the modules send each message.  In the bandwidth benchmark the module contains two threads.  One thread to send messages and another to listen for responses and write benchmarking data to file.  This allows the message sender thread to take advantage of buffering options internal to the AMQP client and broker and greatly increases the bandwidth that can be achieved by the broker implementation.  For the latency benchmark, this buffering leads to inaccurate results, and instead the message producer has a single thread.  It sends messages one at a time and waits for the response from the message consumer.  This ensures thats no buffering is performed by either the AMQP client library or message broker and ensures valid latency measurements.   
+On initialization, both components reads its configuration from the file specified on the command line, and depending on the broker implementation either creates the AMQP queues or attaches to pre-configured queues on the broker instance specified in the configuration file.  
+The source code for the latency-benchmark message producer can be found in Appendix\ref{latency-producer-code}.The source code for the bandwidth-benchmark message producer can be found in Appendix\ref{bandwidth-producer-code}.
 
 \subsection{Format of collected data}
-For simple analysis, data will be written from the benchmark application into comma-separated-value (CSV) files.  
+For simple analysis, data will be written from the benchmark application into comma-separated-value (CSV) files.  The effective bandwidth is calculated by the message producer component and written to the file.  The time that each message is sent and the response time for each message is written to the CSV file so that the round trip time (RTT) and one-way time (OWT) can easily be calculated.
 
 \chapter{Results}
 Creating a simple AMQP producer and consumer proved to be more difficult than expected.  Even though all of the AMQP broker implementations chosen to benchmark advertise support for the AMQP 1.0 standard, the client programs needed specific customizations to successfully send messages through the AMQP broker.   So much configuration was needed for the benchmarking modules that it was necessary to change from command line parsing for configuration options to using separate context files.  At one point, both the producer and consumer modules required 10 separate command line arguments.  Using context files greatly simplified management of program options.  Even with a context file, specific configuration sections were required in the source code of the consumer and producer components in order to support the different broker implementations, refer to the source code below for the level of customization required.
@@ -328,11 +326,17 @@ else
 This goes against the very idea of having a common API to access the messaging services.  Part of this was from the different use cases that each broker implementation addresses.  Apache Qpid (cpp) and Apache Qpid (Java) are both designed to be setup and statically configured.  In order to get these brokers working it was necessary to use an external configuration utility (command-line based for Qpid(cpp), web-based for Qpid(Java)) to setup the broker exchanges and queues.  ActiveMQ and Apollo were much more flexible for dynamic exchange creation.  
 
 \section{Single Broker Benchmark Results}
-From the original list of nine AMQP broker implementations \ref{amqp_broker_table}, only four (ActiveMQ, Qpid-cpp, Qpid-Java, Apollo) resulted in successful data collections.  The brokers that failed did so for a variety of reasons.  RabbitMQ was a nonstarter.  While they claim to have an AMQP 1.0 plugin to enable the protocol on their broker implementation, no amount of configuration of either the broker or the client resulted in a working message passing instance.  Investigation into the issue revealed that in spite of adding and enabling the AMQP 1.0 plugin to RabbitMQ the broker was identifying the underlying transport as 0-9-1.  Frustratingly, although the Qpid JMS Client library also claimed to be configurable to support AMQP 0-9-1 no amount of client side configuration or modification of the benchmark software resulted in a viable message passing system.  StormMQ is totally cloud based - they do not let you instantiate a broker instance locally and was therefore untestable.  SwiftMQ was better, and while using their broker did result in a working configuration, their license specifically disallows the release of benchmarking information.  The real surprise was HornetQ, which while it supports AMQP1.0 natively never worked.  Several configurations were tried, both building from source and using pre-built binaries.  Their built in clients seemed to work which are run as part of their build process, but no matter the options that were added to the benchmark software, it was never able to create a valid AMQP channel.  The specific error message seemed to be an issue with accessing the broker using a JMS style client API.  For the implementations that remain the results of benchmarking can be see in \ref{throughput} and \ref{bandwidth}.  The results collected make sense, as the size of the message increases, the throughput drops, but the bandwidth increases.  In general all four broker implementations were fairly evenly matched.  Surprisingly, all of the brokers had issues sending larger messages.  As the test message size was increased, both client and broker errors were observed.  
+From the original list of nine AMQP broker implementations \ref{fig:amqp-broker-table}, only four (ActiveMQ, Qpid-cpp, Qpid-Java, Apollo) resulted in successful data collections.  The brokers that failed did so for a variety of reasons.  RabbitMQ was a nonstarter.  While they claim to have an AMQP 1.0 plugin to enable the protocol on their broker implementation, no amount of configuration of either the broker or the client resulted in a working message passing instance.  Investigation into the issue revealed that in spite of adding and enabling the AMQP 1.0 plugin to RabbitMQ the broker was identifying the underlying transport as 0-9-1.  Frustratingly, although the Qpid JMS Client library also claimed to be configurable to support AMQP 0-9-1 no amount of client side configuration or modification of the benchmark software resulted in a viable message passing system.  StormMQ is totally cloud based - they do not let you instantiate a broker instance locally and was therefore untestable.  SwiftMQ was better, and while using their broker did result in a working configuration, their license specifically disallows the release of benchmarking information.  The real surprise was HornetQ, which while it supports AMQP1.0 natively never worked.  Several configurations were tried, both building from source and using pre-built binaries.  Their built in clients seemed to work which are run as part of their build process, but no matter the options that were added to the benchmark software, it was never able to create a valid AMQP channel.  The specific error message seemed to be an issue with accessing the broker using a JMS style client API.  For the implementations that remain the results of benchmarking can be see in Figure\ref{fig:throughput} and Figure\ref{fig:bandwidth}.  The results collected make sense, as the size of the message increases, the throughput drops, but the bandwidth increases.  In general all four broker implementations were fairly evenly matched.  Surprisingly, all of the brokers had issues sending larger messages.  As the test message size was increased, both client and broker errors were observed. 
 
 \section{Homogenious Broker Network Benchmark Results}
 \subsection{ActiveMQ-ActiveMQ}
+For ActiveMQ-ActiveMQ bandwidth results see Figure\ref{fig:activemq-activemq-bandwidth}.
+For ActiveMQ-ActiveMQ throughput results see Figure\ref{fig:activemq-activemq-throughput}.
+For ActiveMQ-ActiveMQ latency results see Figure\ref{fig:activemq-activemq-latency}.
 \subsection{QPID-QPID}
+For Qpid-Qpid bandwidth results see Figure\ref{fig:qpid-qpid-bandwidth}.
+For Qpid-Qpid throughput results see Figure\ref{fig:qpid-qpid-throughput}.
+For Qpid-Qpid latency results see Figure\ref{fig:qpid-qpid-latency}.
 
 \section{Hetergenious Broker Network Benchmark Results}
 Unfortunately, because ActiveMQ did not support federation using the AMQP protocol, the ultimate goal of measuring the performance of heterogeneous broker networks was not possible.
@@ -341,80 +345,71 @@ Unfortunately, because ActiveMQ did not support federation using the AMQP protoc
 \centering
  \makebox[\textwidth]{\includegraphics[width=.9\paperwidth, angle=90]{throughput.png}}
 \caption{Throughput}
-\label{throughput}
+\label{fig:throughput}
 \end{figure}
 
 \begin{figure}[tb] 
 \centering
  \makebox[\textwidth]{\includegraphics[width=.9\paperwidth, angle=90]{bandwidth.png}}
 \caption{Bandwidth}
-\label{bandwidth}
+\label{fig:bandwidth}
 \end{figure}
 
 \begin{figure}[tb] 
 \centering
  \makebox[\textwidth]{\includegraphics[width=.9\paperwidth, angle=90]{activemq_activemq_bandwidth.png}}
 \caption{ActiveMQ-ActiveMQ bandwidth}
-\label{activemq-activemq-bandwidth}
+\label{fig:activemq-activemq-bandwidth}
 \end{figure}
 
 \begin{figure}[tb] 
 \centering
  \makebox[\textwidth]{\includegraphics[width=.9\paperwidth, angle=90]{activemq_activemq_throughput.png}}
 \caption{ActiveMQ-ActiveMQ throughput}
-\label{activemq-activemq-througput}
+\label{fig:activemq-activemq-throughput}
 \end{figure}
 
 \begin{figure}[tb] 
 \centering
  \makebox[\textwidth]{\includegraphics[width=.9\paperwidth, angle=90]{activemq_activemq_time.png}}
 \caption{ActiveMQ-ActiveMQ total time}
-\label{activemq-activemq-total-time}
+\label{fig:activemq-activemq-total-time}
 \end{figure}
 
 \begin{figure}[tb] 
 \centering
  \makebox[\textwidth]{\includegraphics[width=.9\paperwidth, angle=90]{activemq_activemq_latency.png}}
 \caption{ActiveMQ-ActiveMQ latency}
-\label{activemq-activemq-latency}
+\label{fig:activemq-activemq-latency}
 \end{figure}
 
 \begin{figure}[tb] 
 \centering
  \makebox[\textwidth]{\includegraphics[width=.9\paperwidth, angle=90]{qpid_qpid_bandwidth.png}}
 \caption{Qpid(CPP)-Qpid(CPP) bandwidth}
-\label{qpid-qpid-bandwidth}
+\label{fig:qpid-qpid-bandwidth}
 \end{figure}
 
 \begin{figure}[tb] 
 \centering
  \makebox[\textwidth]{\includegraphics[width=.9\paperwidth, angle=90]{qpid_qpid_throughput.png}}
 \caption{Qpid(CPP)-Qpid(CPP) throughput}
-\label{qpid-qpid-throughput}
+\label{fig:qpid-qpid-throughput}
 \end{figure}
 
 \begin{figure}[tb] 
 \centering
  \makebox[\textwidth]{\includegraphics[width=.9\paperwidth, angle=90]{qpid_qpid_total_time.png}}
 \caption{Qpid(CPP)-Qpid(CPP) total time}
-\label{qpid-qpid-total-time}
+\label{fig:qpid-qpid-total-time}
 \end{figure}
 
 \begin{figure}[tb] 
 \centering
  \makebox[\textwidth]{\includegraphics[width=.9\paperwidth, angle=90]{qpid_qpid_latency.png}}
 \caption{Qpid(CPP)-Qpid(CPP) latency}
-\label{qpid-qpid-latency}
+\label{fig:qpid-qpid-latency}
 \end{figure}
-
-\chapter{Future Work}
-
-%\subsection{Existing Benchmarks}
-%There are other existing and published benchmarks for MOM systems.  The most widely known is SPECjms2007 \cite{SPEC_JMS2007}.  It was the first industry standard benchmark for evaluating the Java Messaging Service (JMS).
-%SPECjms2007 is designed to model a messaging system of a grocery store - it simulates all of the messages needed to maintain inventory/purchasing/etc.  It does this to provide a comprehensive - real-world evaluation of a messaging system.  The benchmark was expanded by \todo{find name and reference} to originally benchmark the Apache Qpid MOM system \cite{citation needed}.  The benchmark needs to be licensed from the SPEC organization.  
-%https://community.jboss.org/wiki/HornetQGeneralFAQs
-%As of 4/10/2014 HornetQ holds the SPECjms2007 benchmark record \cite{HORNETQ_WIKI}.
-%Version 5.3 of Apache ActiveMQ has published performance results using the SPECjms2007 benchmark \cite{ACTIVEMQ_WIKI}. 
 
 \begin{singlespace}
 \bibliographystyle{plain}
@@ -1602,6 +1597,152 @@ producerId = 1
 numMessages = 3000
 msgSize = 50000
 brokerType = QPID-QPID
+\end{lstlisting}
+
+\chapter{ACTIVEMQ BROKER CONFIGURATION - SINGLE INSTANCE}
+\begin{lstlisting}
+<beans
+  xmlns="http://www.springframework.org/schema/beans"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+  http://activemq.apache.org/schema/core http://activemq.apache.org/schema/core/activemq-core.xsd">
+
+    <bean id="logQuery" class="org.fusesource.insight.log.log4j.Log4jLogQuery"
+          lazy-init="false" scope="singleton"
+          init-method="start" destroy-method="stop">
+    </bean>
+
+    <broker xmlns="http://activemq.apache.org/schema/core" brokerName="localhost" dataDirectory="${activemq.data}" persistent="false">
+
+        <destinationPolicy>
+            <policyMap>
+              <policyEntries>
+                <policyEntry queue=">" producerFlowControl="true" memoryLimit="10 mb">   
+                </policyEntry>
+              </policyEntries>
+            </policyMap>
+        </destinationPolicy>
+
+        <managementContext>
+            <managementContext createConnector="false"/>
+        </managementContext>
+
+        <systemUsage>
+            <systemUsage>
+                <memoryUsage>
+                    <memoryUsage percentOfJvmHeap="70" />
+                </memoryUsage>
+                <storeUsage>
+                    <storeUsage limit="1000 mb"/>
+                </storeUsage>
+                <tempUsage>
+                    <tempUsage limit="1000 mb"/>
+                </tempUsage>
+            </systemUsage>
+        </systemUsage>
+
+        <transportConnectors>
+            <transportConnector name="amqp" uri="amqp://10.9.1.30:5672?maximumConnections=1000&amp;wireFormat.maxFrameSize=104857600"/>
+        </transportConnectors>
+
+        <shutdownHooks>
+            <bean xmlns="http://www.springframework.org/schema/beans" class="org.apache.activemq.hooks.SpringContextHook" />
+        </shutdownHooks>
+
+    </broker>
+</beans>
+\end{lstlisting}
+
+\chapter{ACTIVEMQ BROKER CONFIGURATION - FEDERATED}
+\begin{lstlisting}
+<beans
+  xmlns="http://www.springframework.org/schema/beans"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+  http://activemq.apache.org/schema/core http://activemq.apache.org/schema/core/activemq-core.xsd">
+
+
+    <bean id="logQuery" class="org.fusesource.insight.log.log4j.Log4jLogQuery"
+          lazy-init="false" scope="singleton"
+          init-method="start" destroy-method="stop">
+    </bean>
+
+    <broker xmlns="http://activemq.apache.org/schema/core" brokerName="localhost" dataDirectory="${activemq.data}" persistent="false">
+
+        <destinationPolicy>
+            <policyMap>
+              <policyEntries>
+                <policyEntry queue=">" producerFlowControl="true" memoryLimit="10 mb">   
+                </policyEntry>
+              </policyEntries>
+            </policyMap>
+        </destinationPolicy>
+
+        <networkConnectors>
+            <networkConnector duplex="true" staticBridge="true" uri="static:(tcp://10.9.1.31:61002)" >
+                <staticallyIncludedDestinations>
+                    <queue physicalName="msgs"/>
+                    <queue physicalName="acks"/>
+                </staticallyIncludedDestinations>
+            </networkConnector>
+        </networkConnectors>
+
+        <managementContext>
+            <managementContext createConnector="false"/>
+        </managementContext>
+
+        <systemUsage>
+            <systemUsage>
+                <memoryUsage>
+                    <memoryUsage percentOfJvmHeap="70" />
+                </memoryUsage>
+                <storeUsage>
+                    <storeUsage limit="1000 mb"/>
+                </storeUsage>
+                <tempUsage>
+                    <tempUsage limit="1000 mb"/>
+                </tempUsage>
+            </systemUsage>
+        </systemUsage>
+
+        <transportConnectors>
+            <transportConnector name="amqp" uri="amqp://10.9.1.30:5672?maximumConnections=1000&amp;wireFormat.maxFrameSize=104857600"/>
+            <transportConnector name="openwire" uri="tcp://10.9.1.30:61002" />
+        </transportConnectors>
+
+        <shutdownHooks>
+            <bean xmlns="http://www.springframework.org/schema/beans" class="org.apache.activemq.hooks.SpringContextHook" />
+        </shutdownHooks>
+    </broker>
+</beans>
+\end{lstlisting}
+
+\chapter{APOLLO BROKER CONFIGURATION - FEDERATED}
+\begin{lstlisting}
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<broker xmlns="http://activemq.apache.org/schema/activemq/apollo">
+  <notes>
+    The default configuration with tls/ssl enabled.
+  </notes>
+  <log_category console="console" security="security" connection="connection" audit="audit"/>
+
+  <authentication domain="apollo"/>
+  <access_rule allow="*" action="*"/>
+
+  <virtual_host id="test">
+    <host_name>test_broker</host_name>
+    <host_name>localhost</host_name>
+    <host_name>127.0.0.1</host_name>
+    <host_name>10.9.1.30</host_name>
+    <null_store/>
+  </virtual_host>
+
+  <web_admin bind="http://0.0.0.0:61680"/>
+  <web_admin bind="https://0.0.0.0:61681"/>
+
+  <connector id="amqp" bind="tcp://10.9.1.30:5672"/>
+
+</broker>
 \end{lstlisting}
 
 \end{document}
